@@ -40,7 +40,7 @@
                     wx:for="{{tiles}}"
                     wx:key="id"
                     class="tile tile-{{item.value}} {{item.isNew ? 'tile-new' : ''}} {{item.merged ? 'tile-merged' : ''}}"
-                    style="transform: translate({{item.x * tileStep}}rpx, {{item.y * tileStep}}rpx)"
+                    style="left: {{item.x * tileStep}}rpx; top: {{item.y * tileStep}}rpx"
                   >
                     <text>{{item.value}}</text>
                   </view>
