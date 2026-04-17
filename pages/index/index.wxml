@@ -4,74 +4,70 @@
     catchtouchstart="handleTouchStart"
     catchtouchend="handleTouchEnd"
   >
-    <view class="header-wrapper" style="padding-top: {{statusBarHeight}}px;">
-      <view class="header" style="padding-right: {{headerPaddingRight}}px;">
-        <view class="logo">
-          <view><text class="title">2048</text></view>
-          <view><text class="subtitle">Macaron & Night</text></view>
-        </view>
-        <view class="header-right">
-          <view class="scores">
-            <view class="score-box">
-              <text class="label">Score</text>
-              <text class="value">{{score}}</text>
+    <view class="content-wrapper">
+      <view class="game-wrapper">
+        <view class="game-container">
+          <view class="header-section">
+            <view class="logo-section">
+              <text class="main-title">2048</text>
+              <text class="sub-title">Macaron & Night</text>
             </view>
-            <view class="score-box">
-              <text class="label">Best</text>
-              <text class="value">{{bestScore}}</text>
-            </view>
-          </view>
-          <view class="theme-toggle" catchtap="toggleTheme">
-            <text class="icon">{{isDark ? '☀️' : '🌙'}}</text>
-          </view>
-        </view>
-      </view>
-    </view>
-
-    <view class="game-wrapper">
-      <view class="game-container">
-        <view class="controls">
-          <button class="btn-new-game" catchtap="initGame">New Game</button>
-          <view class="instructions">
-            <text>滑动方块进行移动</text>
-          </view>
-        </view>
-
-        <view class="board-wrapper">
-          <view class="board">
-            <view class="board-inner">
-              <view class="cells">
-                <view wx:for="{{16}}" wx:key="index" class="cell"></view>
+            <view class="info-section">
+              <view class="scores-group">
+                <view class="score-card">
+                  <text class="score-label">SCORE</text>
+                  <text class="score-value">{{score}}</text>
+                </view>
+                <view class="score-card">
+                  <text class="score-label">BEST</text>
+                  <text class="score-value">{{bestScore}}</text>
+                </view>
               </view>
-
-              <view class="tiles-container">
-                <view
-                  wx:for="{{tiles}}"
-                  wx:key="id"
-                  class="tile tile-{{item.value}} {{item.isNew ? 'tile-new' : ''}} {{item.merged ? 'tile-merged' : ''}}"
-                  style="transform: translate({{item.x * tileStep}}rpx, {{item.y * tileStep}}rpx)"
-                >
-                  <text>{{item.value}}</text>
+              <view class="action-row">
+                <button class="action-btn" catchtap="initGame">New Game</button>
+                <view class="theme-btn" catchtap="toggleTheme">
+                  <text class="theme-icon">{{isDark ? '☀️' : '🌙'}}</text>
                 </view>
               </view>
             </view>
           </view>
 
-          <view wx:if="{{isGameOver}}" class="game-overlay" catchtap="handleOverlayTap">
-            <text class="message">Game Over</text>
-            <text class="sub-message">Score: {{score}}</text>
+          <view class="hint-text">
+            <text>Join the numbers and get to the 2048!</text>
           </view>
 
-          <view wx:if="{{hasWon && !keepPlaying}}" class="game-overlay" catchtap="handleOverlayTap">
-            <text class="message">You Win!</text>
-            <text class="sub-message">Tap to continue</text>
+          <view class="board-wrapper">
+            <view class="board">
+              <view class="board-inner">
+                <view class="cells">
+                  <view wx:for="{{16}}" wx:key="index" class="cell"></view>
+                </view>
+
+                <view class="tiles-container">
+                  <view
+                    wx:for="{{tiles}}"
+                    wx:key="id"
+                    class="tile tile-{{item.value}} {{item.isNew ? 'tile-new' : ''}} {{item.merged ? 'tile-merged' : ''}}"
+                    style="transform: translate({{item.x * tileStep}}rpx, {{item.y * tileStep}}rpx)"
+                  >
+                    <text>{{item.value}}</text>
+                  </view>
+                </view>
+              </view>
+            </view>
+
+            <view wx:if="{{isGameOver}}" class="game-overlay" catchtap="handleOverlayTap">
+              <text class="message">Game Over</text>
+              <text class="sub-message">Score: {{score}}</text>
+            </view>
+
+            <view wx:if="{{hasWon && !keepPlaying}}" class="game-overlay" catchtap="handleOverlayTap">
+              <text class="message">You Win!</text>
+              <text class="sub-message">Tap to continue</text>
+            </view>
           </view>
         </view>
       </view>
-    </view>
-
-    <view class="footer">
-      <text>Join the numbers and get to the 2048!</text>
     </view>
   </view>
 </view>
