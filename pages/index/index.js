@@ -1,6 +1,4 @@
 const GRID_SIZE = 4
-const CELL_SIZE = 95
-const GAP = 12
 
 Page({
   data: {
@@ -11,15 +9,22 @@ Page({
     hasWon: false,
     keepPlaying: false,
     isDark: false,
-    tiles: [],
-    cellSize: CELL_SIZE,
-    gap: GAP
+    tiles: []
   },
 
   tileId: 0,
+  touchStartX: 0,
+  touchStartY: 0,
+  isMoving: false,
 
   onLoad() {
     this.initGame()
+  },
+
+  onShow() {
+    if (this.data.tiles.length === 0) {
+      this.initGame()
+    }
   },
 
   initGame() {
@@ -117,14 +122,44 @@ Page({
     return result
   },
 
-  move(e) {
-    const direction = e.currentTarget.dataset.direction
-    if (!direction) return
-    this._moveInDirection(direction)
+  handleTouchStart(e) {
+    if (this.data.isGameOver && !this.data.keepPlaying) return
+    this.touchStartX = e.touches[0].clientX
+    this.touchStartY = e.touches[0].clientY
+    this.isMoving = false
   },
 
-  _moveInDirection(direction) {
+  handleTouchEnd(e) {
     if (this.data.isGameOver && !this.data.keepPlaying) return
+    if (!this.touchStartX || !this.touchStartY) return
+
+    const touchEndX = e.changedTouches[0].clientX
+    const touchEndY = e.changedTouches[0].clientY
+
+    const dx = touchEndX - this.touchStartX
+    const dy = touchEndY - this.touchStartY
+
+    const minSwipe = 30
+
+    if (Math.abs(dx) > Math.abs(dy)) {
+      if (Math.abs(dx) > minSwipe) {
+        this.moveInDirection(dx > 0 ? 'right' : 'left')
+      }
+    } else {
+      if (Math.abs(dy) > minSwipe) {
+        this.moveInDirection(dy > 0 ? 'down' : 'up')
+      }
+    }
+
+    this.touchStartX = 0
+    this.touchStartY = 0
+  },
+
+  moveInDirection(direction) {
+    if (this.data.isGameOver && !this.data.keepPlaying) return
+    if (this.isMoving) return
+
+    this.isMoving = true
 
     const board = JSON.parse(JSON.stringify(this.data.board))
     const oldBoard = JSON.stringify(board)
@@ -134,6 +169,7 @@ Page({
       for (let x = 0; x < GRID_SIZE; x++) {
         if (board[y][x]) {
           board[y][x].merged = false
+          board[y][x].isNew = false
         }
       }
     }
@@ -280,26 +316,30 @@ Page({
             for (let x = 0; x < GRID_SIZE; x++) {
               if (board[y][x]?.value === 2048) {
                 this.setData({ hasWon: true })
+                this.isMoving = false
                 return
               }
             }
           }
         }
 
-        if (!this.canMove()) {
+        if (!this.canMove(board)) {
           this.setData({ isGameOver: true })
         }
+        this.isMoving = false
       }, 160)
+    } else {
+      this.isMoving = false
     }
   },
 
-  canMove() {
-    const board = this.data.board
+  canMove(board) {
+    const checkBoard = board || this.data.board
     for (let y = 0; y < GRID_SIZE; y++) {
       for (let x = 0; x < GRID_SIZE; x++) {
-        if (!board[y][x]) return true
-        if (x < GRID_SIZE - 1 && board[y][x]?.value === board[y][x + 1]?.value) return true
-        if (y < GRID_SIZE - 1 && board[y][x]?.value === board[y + 1][x]?.value) return true
+        if (!checkBoard[y][x]) return true
+        if (x < GRID_SIZE - 1 && checkBoard[y][x]?.value === checkBoard[y][x + 1]?.value) return true
+        if (y < GRID_SIZE - 1 && checkBoard[y][x]?.value === checkBoard[y + 1][x]?.value) return true
       }
     }
     return false
@@ -327,39 +367,6 @@ Page({
         keepPlaying: true
       })
     }
-  },
-
-  touchStartX: 0,
-  touchStartY: 0,
-
-  handleTouchStart(e) {
-    this.touchStartX = e.touches[0].clientX
-    this.touchStartY = e.touches[0].clientY
-  },
-
-  handleTouchEnd(e) {
-    if (!this.touchStartX || !this.touchStartY) return
-
-    const touchEndX = e.changedTouches[0].clientX
-    const touchEndY = e.changedTouches[0].clientY
-
-    const dx = touchEndX - this.touchStartX
-    const dy = touchEndY - this.touchStartY
-
-    const minSwipe = 30
-
-    if (Math.abs(dx) > Math.abs(dy)) {
-      if (Math.abs(dx) > minSwipe) {
-        this._moveInDirection(dx > 0 ? 'right' : 'left')
-      }
-    } else {
-      if (Math.abs(dy) > minSwipe) {
-        this._moveInDirection(dy > 0 ? 'down' : 'up')
-      }
-    }
-
-    this.touchStartX = 0
-    this.touchStartY = 0
   },
 
   handleOverlayTap() {
