@@ -1,5 +1,5 @@
 const GRID_SIZE = 4
-const TILE_STEP = 152
+const TILE_STEP = 154
 
 Page({
   data: {

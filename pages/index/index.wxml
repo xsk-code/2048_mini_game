@@ -8,26 +8,18 @@
       <view class="game-wrapper">
         <view class="game-container">
           <view class="header-section">
-            <view class="logo-section">
+            <view class="title-row">
               <text class="main-title">2048</text>
               <text class="sub-title">Macaron & Night</text>
             </view>
-            <view class="info-section">
-              <view class="scores-group">
-                <view class="score-card">
-                  <text class="score-label">SCORE</text>
-                  <text class="score-value">{{score}}</text>
-                </view>
-                <view class="score-card">
-                  <text class="score-label">BEST</text>
-                  <text class="score-value">{{bestScore}}</text>
-                </view>
+            <view class="scores-row">
+              <view class="score-card">
+                <text class="score-label">SCORE</text>
+                <text class="score-value">{{score}}</text>
               </view>
-              <view class="action-row">
-                <button class="action-btn" catchtap="initGame">New Game</button>
-                <view class="theme-btn" catchtap="toggleTheme">
-                  <text class="theme-icon">{{isDark ? '☀️' : '🌙'}}</text>
-                </view>
+              <view class="score-card">
+                <text class="score-label">BEST</text>
+                <text class="score-value">{{bestScore}}</text>
               </view>
             </view>
           </view>
@@ -64,6 +56,13 @@
             <view wx:if="{{hasWon && !keepPlaying}}" class="game-overlay" catchtap="handleOverlayTap">
               <text class="message">You Win!</text>
               <text class="sub-message">Tap to continue</text>
+            </view>
+          </view>
+
+          <view class="action-section">
+            <button class="action-btn" catchtap="initGame">New Game</button>
+            <view class="theme-btn" catchtap="toggleTheme">
+              <text class="theme-icon">{{isDark ? '☀️' : '🌙'}}</text>
             </view>
           </view>
         </view>

@@ -27,12 +27,12 @@ page {
   align-items: center;
   justify-content: center;
   min-height: 0;
-  padding: 24rpx 0;
+  padding: 32rpx 40rpx;
 }
 
 .game-wrapper {
   width: 100%;
-  max-width: 680rpx;
+  max-width: 700rpx;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -48,60 +48,51 @@ page {
 .header-section {
   width: 100%;
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  align-items: stretch;
+  margin-bottom: 32rpx;
+}
+
+.title-row {
+  display: flex;
+  flex-direction: column;
   align-items: center;
   margin-bottom: 32rpx;
 }
 
-.logo-section {
-  display: flex;
-  flex-direction: column;
-}
-
 .main-title {
-  font-size: 72rpx;
+  font-size: 88rpx;
   font-weight: 800;
   background: linear-gradient(135deg, #FF7092, #FF9500);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  line-height: 1;
-  margin-bottom: 8rpx;
+  line-height: 1.1;
+  margin-bottom: 16rpx;
 }
 
 .sub-title {
   font-size: 20rpx;
   font-weight: 600;
-  letter-spacing: 0.15em;
+  letter-spacing: 0.3em;
   text-transform: uppercase;
-  color: #8B7A80;
+  color: #B8A5AA;
   line-height: 1;
 }
 
-.info-section {
+.scores-row {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-}
-
-.scores-group {
-  display: flex;
-  margin-bottom: 16rpx;
+  justify-content: center;
+  gap: 32rpx;
 }
 
 .score-card {
   background-color: #F5E6E8;
-  border-radius: 10rpx;
-  padding: 12rpx 20rpx;
-  min-width: 120rpx;
+  border-radius: 14rpx;
+  padding: 18rpx 36rpx;
   text-align: center;
   position: relative;
   overflow: hidden;
-  margin-left: 12rpx;
-}
-
-.score-card:first-child {
-  margin-left: 0;
 }
 
 .score-card::before {
@@ -110,86 +101,50 @@ page {
   top: 0;
   left: 0;
   right: 0;
-  height: 5rpx;
+  height: 6rpx;
   background: linear-gradient(90deg, #FF7092, #FF9500);
 }
 
 .score-label {
-  font-size: 16rpx;
-  font-weight: 600;
-  letter-spacing: 0.1em;
+  font-size: 14rpx;
+  font-weight: 700;
+  letter-spacing: 0.15em;
   text-transform: uppercase;
-  color: #8B7A80;
+  color: #A89095;
   display: block;
-  margin-top: 5rpx;
+  margin-top: 8rpx;
 }
 
 .score-value {
-  font-size: 32rpx;
-  font-weight: 700;
+  font-size: 36rpx;
+  font-weight: 800;
   color: #5D4E54;
   display: block;
-  line-height: 1.2;
-}
-
-.action-row {
-  display: flex;
-  align-items: center;
-}
-
-.action-btn {
-  font-size: 24rpx;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  background-color: #FF7092;
-  color: #FFFFFF;
-  border: none;
-  padding: 16rpx 32rpx;
-  border-radius: 10rpx;
-  line-height: 1;
-  margin: 0;
-  margin-right: 12rpx;
-}
-
-.action-btn::after {
-  border: none;
-}
-
-.theme-btn {
-  width: 56rpx;
-  height: 32rpx;
-  background-color: #F5E6E8;
-  border-radius: 16rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.theme-icon {
-  font-size: 22rpx;
+  line-height: 1.3;
+  margin-top: 4rpx;
 }
 
 .hint-text {
-  margin-bottom: 20rpx;
+  margin-bottom: 28rpx;
 }
 
 .hint-text text {
-  font-size: 22rpx;
-  color: #8B7A80;
+  font-size: 20rpx;
+  color: #B8A5AA;
+  letter-spacing: 0.02em;
 }
 
 .board-wrapper {
   position: relative;
   width: 100%;
-  max-width: 620rpx;
+  max-width: 640rpx;
 }
 
 .board {
   width: 100%;
   background-color: #F5E6E8;
-  border-radius: 16rpx;
-  padding: 14rpx;
+  border-radius: 20rpx;
+  padding: 16rpx;
   box-sizing: border-box;
   position: relative;
 }
@@ -202,10 +157,10 @@ page {
 
 .board-inner {
   position: absolute;
-  top: 14rpx;
-  left: 14rpx;
-  right: 14rpx;
-  bottom: 14rpx;
+  top: 16rpx;
+  left: 16rpx;
+  right: 16rpx;
+  bottom: 16rpx;
 }
 
 .cells {
@@ -218,10 +173,10 @@ page {
 }
 
 .cell {
-  width: 136rpx;
-  height: 136rpx;
+  width: 140rpx;
+  height: 140rpx;
   background-color: #FAEEEF;
-  border-radius: 12rpx;
+  border-radius: 14rpx;
 }
 
 .tiles-container {
@@ -234,9 +189,9 @@ page {
 
 .tile {
   position: absolute;
-  width: 136rpx;
-  height: 136rpx;
-  border-radius: 12rpx;
+  width: 140rpx;
+  height: 140rpx;
+  border-radius: 14rpx;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -331,7 +286,7 @@ page {
   right: 0;
   bottom: 0;
   background-color: rgba(255, 248, 249, 0.95);
-  border-radius: 16rpx;
+  border-radius: 20rpx;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -340,27 +295,73 @@ page {
 }
 
 .game-overlay .message {
-  font-size: 52rpx;
+  font-size: 56rpx;
   font-weight: 800;
   background: linear-gradient(135deg, #FF7092, #FF9500);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   line-height: 1;
-  margin-bottom: 14rpx;
+  margin-bottom: 16rpx;
 }
 
 .game-overlay .sub-message {
-  font-size: 24rpx;
+  font-size: 26rpx;
   color: #8B7A80;
+}
+
+.action-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20rpx;
+  margin-top: 36rpx;
+}
+
+.action-btn {
+  font-size: 26rpx;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background-color: #FF7092;
+  color: #FFFFFF;
+  border: none;
+  padding: 20rpx 44rpx;
+  border-radius: 14rpx;
+  line-height: 1;
+  margin: 0;
+}
+
+.action-btn::after {
+  border: none;
+}
+
+.theme-btn {
+  width: 64rpx;
+  height: 64rpx;
+  background-color: #F5E6E8;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 200ms ease-out;
+}
+
+.theme-btn:active {
+  transform: scale(0.92);
+}
+
+.theme-icon {
+  font-size: 30rpx;
 }
 
 .app-container.dark .main-title {
   background: linear-gradient(135deg, #88D8B0, #4CD090);
+  -webkit-text-fill-color: transparent;
 }
 
 .app-container.dark .sub-title {
-  color: #9A9AB0;
+  color: #6A6A80;
 }
 
 .app-container.dark .score-card {
@@ -376,7 +377,7 @@ page {
 }
 
 .app-container.dark .score-label {
-  color: #9A9AB0;
+  color: #7A7A90;
 }
 
 .app-container.dark .action-btn {
@@ -389,7 +390,7 @@ page {
 }
 
 .app-container.dark .hint-text text {
-  color: #9A9AB0;
+  color: #6A6A80;
 }
 
 .app-container.dark .board {
@@ -406,8 +407,9 @@ page {
 
 .app-container.dark .game-overlay .message {
   background: linear-gradient(135deg, #88D8B0, #4CD090);
+  -webkit-text-fill-color: transparent;
 }
 
 .app-container.dark .game-overlay .sub-message {
-  color: #9A9AB0;
+  color: #7A7A90;
 }
