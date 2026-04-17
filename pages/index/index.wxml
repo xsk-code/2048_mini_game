@@ -1,9 +1,9 @@
 <view class="safe-area">
   <view
-    class="app-container {{isDark ? 'dark' : ''}}"
-    catchtouchstart="handleTouchStart"
-    catchtouchend="handleTouchEnd"
-  >
+  class="app-container {{isDark ? 'dark' : ''}}"
+  bindtouchstart="handleTouchStart"
+  bindtouchend="handleTouchEnd"
+>
     <view class="content-wrapper">
       <view class="game-wrapper">
         <view class="game-container">
