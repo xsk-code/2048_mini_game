@@ -1,5 +1,4 @@
 const GRID_SIZE = 4
-const TILE_SIZE = 136
 const TILE_STEP = 152
 
 Page({
@@ -12,13 +11,7 @@ Page({
     keepPlaying: false,
     isDark: false,
     tiles: [],
-    statusBarHeight: 0,
-    tileStep: TILE_STEP,
-    menuButtonRight: 0,
-    menuButtonTop: 0,
-    menuButtonHeight: 0,
-    headerPaddingRight: 0,
-    headerHeight: 0
+    tileStep: TILE_STEP
   },
 
   tileId: 0,
@@ -27,43 +20,12 @@ Page({
   isMoving: false,
 
   onLoad() {
-    this.getSystemInfo()
     this.initGame()
   },
 
   onShow() {
     if (this.data.tiles.length === 0) {
       this.initGame()
-    }
-  },
-
-  getSystemInfo() {
-    try {
-      const systemInfo = wx.getSystemInfoSync()
-      const menuButton = wx.getMenuButtonBoundingClientRect()
-      
-      const statusBarHeight = systemInfo.statusBarHeight || 44
-      const menuButtonTop = menuButton ? menuButton.top : statusBarHeight + 6
-      const menuButtonRight = menuButton ? systemInfo.screenWidth - menuButton.right : 24
-      const menuButtonHeight = menuButton ? menuButton.height : 32
-      
-      const headerHeight = (menuButtonTop - statusBarHeight) * 2 + menuButtonHeight + statusBarHeight
-      const headerPaddingRight = menuButtonRight + 16
-
-      this.setData({
-        statusBarHeight,
-        menuButtonRight,
-        menuButtonTop,
-        menuButtonHeight,
-        headerPaddingRight,
-        headerHeight
-      })
-    } catch (e) {
-      this.setData({
-        statusBarHeight: 44,
-        headerPaddingRight: 40,
-        headerHeight: 88
-      })
     }
   },
 

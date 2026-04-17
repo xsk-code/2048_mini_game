@@ -4,10 +4,6 @@ page {
   overflow: hidden;
 }
 
-.page.dark {
-  background-color: #1A1A2E;
-}
-
 .safe-area {
   height: 100%;
   box-sizing: border-box;
@@ -17,7 +13,6 @@ page {
   height: 100%;
   display: flex;
   flex-direction: column;
-  align-items: center;
   background-color: #FFF8F9;
 }
 
@@ -25,47 +20,56 @@ page {
   background-color: #1A1A2E;
 }
 
-.header-wrapper {
-  width: 100%;
-  flex-shrink: 0;
+.content-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  padding: 24rpx 0;
 }
 
-.header {
+.game-wrapper {
   width: 100%;
-  max-width: 620rpx;
+  max-width: 680rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.game-container {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.header-section {
+  width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16rpx 32rpx;
-  padding-left: 32rpx;
-  box-sizing: border-box;
-  flex-shrink: 0;
+  margin-bottom: 32rpx;
 }
 
-.logo {
+.logo-section {
   display: flex;
   flex-direction: column;
 }
 
-.logo view {
-  margin-bottom: 6rpx;
-}
-
-.logo view:last-child {
-  margin-bottom: 0;
-}
-
-.title {
-  font-size: 64rpx;
+.main-title {
+  font-size: 72rpx;
   font-weight: 800;
   background: linear-gradient(135deg, #FF7092, #FF9500);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   line-height: 1;
+  margin-bottom: 8rpx;
 }
 
-.subtitle {
+.sub-title {
   font-size: 20rpx;
   font-weight: 600;
   letter-spacing: 0.15em;
@@ -74,103 +78,66 @@ page {
   line-height: 1;
 }
 
-.header-right {
+.info-section {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-end;
 }
 
-.scores {
+.scores-group {
   display: flex;
-  margin-right: 16rpx;
+  margin-bottom: 16rpx;
 }
 
-.score-box {
+.score-card {
   background-color: #F5E6E8;
-  border-radius: 8rpx;
-  padding: 8rpx 12rpx;
-  min-width: 100rpx;
+  border-radius: 10rpx;
+  padding: 12rpx 20rpx;
+  min-width: 120rpx;
   text-align: center;
   position: relative;
   overflow: hidden;
-  margin-left: 8rpx;
+  margin-left: 12rpx;
 }
 
-.score-box:first-child {
+.score-card:first-child {
   margin-left: 0;
 }
 
-.score-box::before {
+.score-card::before {
   content: '';
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  height: 4rpx;
+  height: 5rpx;
   background: linear-gradient(90deg, #FF7092, #FF9500);
 }
 
-.score-box .label {
+.score-label {
   font-size: 16rpx;
   font-weight: 600;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: #8B7A80;
   display: block;
-  margin-top: 4rpx;
+  margin-top: 5rpx;
 }
 
-.score-box .value {
-  font-size: 28rpx;
+.score-value {
+  font-size: 32rpx;
   font-weight: 700;
   color: #5D4E54;
   display: block;
   line-height: 1.2;
 }
 
-.theme-toggle {
-  width: 48rpx;
-  height: 28rpx;
-  background-color: #F5E6E8;
-  border-radius: 14rpx;
+.action-row {
   display: flex;
   align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
 }
 
-.theme-toggle .icon {
-  font-size: 20rpx;
-}
-
-.game-wrapper {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  padding: 0 20rpx;
-  box-sizing: border-box;
-  min-height: 0;
-}
-
-.game-container {
-  width: 100%;
-  max-width: 620rpx;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.controls {
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16rpx;
-}
-
-.btn-new-game {
+.action-btn {
   font-size: 24rpx;
   font-weight: 600;
   letter-spacing: 0.05em;
@@ -178,20 +145,37 @@ page {
   background-color: #FF7092;
   color: #FFFFFF;
   border: none;
-  padding: 18rpx 32rpx;
+  padding: 16rpx 32rpx;
   border-radius: 10rpx;
   line-height: 1;
   margin: 0;
-  position: relative;
-  overflow: hidden;
+  margin-right: 12rpx;
 }
 
-.btn-new-game::after {
+.action-btn::after {
   border: none;
 }
 
-.instructions {
-  font-size: 20rpx;
+.theme-btn {
+  width: 56rpx;
+  height: 32rpx;
+  background-color: #F5E6E8;
+  border-radius: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.theme-icon {
+  font-size: 22rpx;
+}
+
+.hint-text {
+  margin-bottom: 20rpx;
+}
+
+.hint-text text {
+  font-size: 22rpx;
   color: #8B7A80;
 }
 
@@ -371,14 +355,41 @@ page {
   color: #8B7A80;
 }
 
-.footer {
-  padding: 16rpx 0;
-  flex-shrink: 0;
+.app-container.dark .main-title {
+  background: linear-gradient(135deg, #88D8B0, #4CD090);
 }
 
-.footer text {
-  font-size: 20rpx;
-  color: #8B7A80;
+.app-container.dark .sub-title {
+  color: #9A9AB0;
+}
+
+.app-container.dark .score-card {
+  background-color: #0F3460;
+}
+
+.app-container.dark .score-card::before {
+  background: linear-gradient(90deg, #88D8B0, #4CD090);
+}
+
+.app-container.dark .score-value {
+  color: #EAEAEA;
+}
+
+.app-container.dark .score-label {
+  color: #9A9AB0;
+}
+
+.app-container.dark .action-btn {
+  background-color: #88D8B0;
+  color: #1A1A2E;
+}
+
+.app-container.dark .theme-btn {
+  background-color: #0F3460;
+}
+
+.app-container.dark .hint-text text {
+  color: #9A9AB0;
 }
 
 .app-container.dark .board {
@@ -389,61 +400,14 @@ page {
   background-color: #1A1A2E;
 }
 
-.app-container.dark .score-box {
-  background-color: #0F3460;
-}
-
-.app-container.dark .score-box::before {
-  background: linear-gradient(90deg, #88D8B0, #4CD090);
-}
-
-.app-container.dark .score-box .value {
-  color: #EAEAEA;
-}
-
-.app-container.dark .score-box .label {
-  color: #9A9AB0;
-}
-
-.app-container.dark .title {
-  background: linear-gradient(135deg, #88D8B0, #4CD090);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.app-container.dark .subtitle {
-  color: #9A9AB0;
-}
-
-.app-container.dark .btn-new-game {
-  background-color: #88D8B0;
-  color: #1A1A2E;
-}
-
-.app-container.dark .instructions {
-  color: #9A9AB0;
-}
-
-.app-container.dark .footer text {
-  color: #9A9AB0;
-}
-
 .app-container.dark .game-overlay {
   background-color: rgba(26, 26, 46, 0.95);
 }
 
 .app-container.dark .game-overlay .message {
   background: linear-gradient(135deg, #88D8B0, #4CD090);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
 }
 
 .app-container.dark .game-overlay .sub-message {
   color: #9A9AB0;
-}
-
-.app-container.dark .theme-toggle {
-  background-color: #0F3460;
 }
