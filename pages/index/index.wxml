@@ -1,9 +1,11 @@
-<view class="safe-area {{isDark ? 'dark' : ''}}">
+<view class="safe-area">
   <view
     class="app-container {{isDark ? 'dark' : ''}}"
     catchtouchstart="handleTouchStart"
     catchtouchend="handleTouchEnd"
   >
+    <view class="status-bar-placeholder" style="height: {{statusBarHeight}}px;"></view>
+
     <view class="header">
       <view class="logo">
         <view><text class="title">2048</text></view>
@@ -26,40 +28,44 @@
       </view>
     </view>
 
-    <view class="game-container">
-      <view class="controls">
-        <button class="btn-new-game" catchtap="initGame">New Game</button>
-        <view class="instructions">
-          <text>滑动方块进行移动</text>
-        </view>
-      </view>
-
-      <view class="board-wrapper">
-        <view class="board">
-          <view class="cells">
-            <view wx:for="{{16}}" wx:key="index" class="cell"></view>
+    <view class="game-wrapper">
+      <view class="game-container">
+        <view class="controls">
+          <button class="btn-new-game" catchtap="initGame">New Game</button>
+          <view class="instructions">
+            <text>滑动方块进行移动</text>
           </view>
+        </view>
 
-          <view class="tiles-container">
-            <view
-              wx:for="{{tiles}}"
-              wx:key="id"
-              class="tile tile-{{item.value}} {{item.isNew ? 'tile-new' : ''}} {{item.merged ? 'tile-merged' : ''}}"
-              style="transform: translate({{item.x * 158}}rpx, {{item.y * 158}}rpx)"
-            >
-              <text>{{item.value}}</text>
+        <view class="board-wrapper">
+          <view class="board">
+            <view class="board-inner">
+              <view class="cells">
+                <view wx:for="{{16}}" wx:key="index" class="cell"></view>
+              </view>
+
+              <view class="tiles-container">
+                <view
+                  wx:for="{{tiles}}"
+                  wx:key="id"
+                  class="tile tile-{{item.value}} {{item.isNew ? 'tile-new' : ''}} {{item.merged ? 'tile-merged' : ''}}"
+                  style="transform: translate({{item.x * tileStep}}rpx, {{item.y * tileStep}}rpx)"
+                >
+                  <text>{{item.value}}</text>
+                </view>
+              </view>
             </view>
           </view>
-        </view>
 
-        <view wx:if="{{isGameOver}}" class="game-overlay" catchtap="handleOverlayTap">
-          <text class="message">Game Over</text>
-          <text class="sub-message">Score: {{score}}</text>
-        </view>
+          <view wx:if="{{isGameOver}}" class="game-overlay" catchtap="handleOverlayTap">
+            <text class="message">Game Over</text>
+            <text class="sub-message">Score: {{score}}</text>
+          </view>
 
-        <view wx:if="{{hasWon && !keepPlaying}}" class="game-overlay" catchtap="handleOverlayTap">
-          <text class="message">You Win!</text>
-          <text class="sub-message">Tap to continue</text>
+          <view wx:if="{{hasWon && !keepPlaying}}" class="game-overlay" catchtap="handleOverlayTap">
+            <text class="message">You Win!</text>
+            <text class="sub-message">Tap to continue</text>
+          </view>
         </view>
       </view>
     </view>

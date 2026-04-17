@@ -1,4 +1,6 @@
 const GRID_SIZE = 4
+const TILE_SIZE = 136
+const TILE_STEP = 152
 
 Page({
   data: {
@@ -9,7 +11,9 @@ Page({
     hasWon: false,
     keepPlaying: false,
     isDark: false,
-    tiles: []
+    tiles: [],
+    statusBarHeight: 0,
+    tileStep: TILE_STEP
   },
 
   tileId: 0,
@@ -18,12 +22,26 @@ Page({
   isMoving: false,
 
   onLoad() {
+    this.getSystemInfo()
     this.initGame()
   },
 
   onShow() {
     if (this.data.tiles.length === 0) {
       this.initGame()
+    }
+  },
+
+  getSystemInfo() {
+    try {
+      const systemInfo = wx.getSystemInfoSync()
+      this.setData({
+        statusBarHeight: systemInfo.statusBarHeight || 44
+      })
+    } catch (e) {
+      this.setData({
+        statusBarHeight: 44
+      })
     }
   },
 
