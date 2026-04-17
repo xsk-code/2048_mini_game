@@ -1,0 +1,65 @@
+<view
+  class="app-container {{isDark ? 'dark' : ''}}"
+  bindtouchstart="handleTouchStart"
+  bindtouchend="handleTouchEnd"
+>
+  <view class="header">
+    <view class="logo">
+      <text class="title">2048</text>
+      <text class="subtitle">Macaron & Night</text>
+    </view>
+    <view class="header-right">
+      <view class="scores">
+        <view class="score-box">
+          <text class="label">Score</text>
+          <text class="value">{{score}}</text>
+        </view>
+        <view class="score-box">
+          <text class="label">Best</text>
+          <text class="value">{{bestScore}}</text>
+        </view>
+      </view>
+      <view class="theme-toggle" bindtap="toggleTheme">
+        <text class="icon">{{isDark ? '☀️' : '🌙'}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="game-container">
+    <view class="controls">
+      <button class="btn-new-game" bindtap="initGame">New Game</button>
+      <view class="instructions">
+        <text>← ↑ ↓ → to move</text>
+      </view>
+    </view>
+
+    <view class="board {{isDark ? 'dark' : ''}}">
+      <view wx:for="{{16}}" wx:key="index" class="cell"></view>
+
+      <view class="tiles-container">
+        <view
+          wx:for="{{tiles}}"
+          wx:key="id"
+          class="tile tile-{{item.value}} {{item.isNew ? 'tile-new' : ''}} {{item.merged ? 'tile-merged' : ''}}"
+          style="transform: translate({{item.x * (cellSize + gap)}}rpx, {{item.y * (cellSize + gap)}}rpx)"
+        >
+          {{item.value}}
+        </view>
+      </view>
+
+      <view wx:if="{{isGameOver}}" class="game-overlay" bindtap="handleOverlayTap">
+        <text class="message">Game Over</text>
+        <text class="sub-message">Score: {{score}}</text>
+      </view>
+
+      <view wx:if="{{hasWon && !keepPlaying}}" class="game-overlay" bindtap="handleOverlayTap">
+        <text class="message">You Win!</text>
+        <text class="sub-message">Tap to continue</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="footer">
+    <text>Join the numbers and get to 2048!</text>
+  </view>
+</view>
