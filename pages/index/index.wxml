@@ -4,26 +4,26 @@
     catchtouchstart="handleTouchStart"
     catchtouchend="handleTouchEnd"
   >
-    <view class="status-bar-placeholder" style="height: {{statusBarHeight}}px;"></view>
-
-    <view class="header">
-      <view class="logo">
-        <view><text class="title">2048</text></view>
-        <view><text class="subtitle">Macaron & Night</text></view>
-      </view>
-      <view class="header-right">
-        <view class="scores">
-          <view class="score-box">
-            <text class="label">Score</text>
-            <text class="value">{{score}}</text>
-          </view>
-          <view class="score-box">
-            <text class="label">Best</text>
-            <text class="value">{{bestScore}}</text>
-          </view>
+    <view class="header-wrapper" style="padding-top: {{statusBarHeight}}px;">
+      <view class="header" style="padding-right: {{headerPaddingRight}}px;">
+        <view class="logo">
+          <view><text class="title">2048</text></view>
+          <view><text class="subtitle">Macaron & Night</text></view>
         </view>
-        <view class="theme-toggle" catchtap="toggleTheme">
-          <text class="icon">{{isDark ? '☀️' : '🌙'}}</text>
+        <view class="header-right">
+          <view class="scores">
+            <view class="score-box">
+              <text class="label">Score</text>
+              <text class="value">{{score}}</text>
+            </view>
+            <view class="score-box">
+              <text class="label">Best</text>
+              <text class="value">{{bestScore}}</text>
+            </view>
+          </view>
+          <view class="theme-toggle" catchtap="toggleTheme">
+            <text class="icon">{{isDark ? '☀️' : '🌙'}}</text>
+          </view>
         </view>
       </view>
     </view>
