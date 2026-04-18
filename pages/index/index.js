@@ -164,7 +164,6 @@ Page({
     this.isMoving = true
 
     const board = JSON.parse(JSON.stringify(this.data.board))
-    const oldBoard = JSON.stringify(board)
     let scoreGain = 0
 
     for (let y = 0; y < GRID_SIZE; y++) {
@@ -175,6 +174,8 @@ Page({
         }
       }
     }
+
+    const oldBoard = JSON.stringify(board)
 
     if (direction === 'left') {
       for (let y = 0; y < GRID_SIZE; y++) {
