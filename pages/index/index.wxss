@@ -358,7 +358,10 @@ page {
 }
 
 .app-container.dark .main-title {
-  background: linear-gradient(135deg, #7EB8E6, #A8D4FF);
+  background: linear-gradient(135deg, #88D8B0, #6CD4A0);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .app-container.dark .sub-title {
@@ -407,7 +410,10 @@ page {
 }
 
 .app-container.dark .game-overlay .message {
-  background: linear-gradient(135deg, #7EB8E6, #A8D4FF);
+  background: linear-gradient(135deg, #88D8B0, #6CD4A0);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .app-container.dark .game-overlay .sub-message {
