@@ -126,13 +126,13 @@ class Game2048 {
     
     this.titleFontSize = this.rpx(88);
     this.subtitleFontSize = this.rpx(20);
-    this.scoreLabelFontSize = this.rpx(14);
-    this.scoreValueFontSize = this.rpx(36);
+    this.scoreLabelFontSize = this.rpx(12);
+    this.scoreValueFontSize = this.rpx(28);
     this.hintFontSize = this.rpx(20);
-    this.actionBtnFontSize = this.rpx(26);
+    this.actionBtnFontSize = this.rpx(22);
     
-    this.scoreCardPaddingV = this.rpx(18);
-    this.scoreCardPaddingH = this.rpx(36);
+    this.scoreCardPaddingV = this.rpx(12);
+    this.scoreCardPaddingH = this.rpx(16);
     this.scoreCardRadius = this.rpx(14);
     this.scoreCardsGap = this.rpx(32);
     
@@ -142,12 +142,12 @@ class Game2048 {
     this.actionSectionMarginTop = this.rpx(36);
     this.actionBtnsGap = this.rpx(20);
     
-    this.newGameBtnWidth = this.rpx(140);
-    this.newGameBtnHeight = this.rpx(44);
-    this.themeBtnSize = this.rpx(64);
+    this.newGameBtnWidth = this.rpx(200);
+    this.newGameBtnHeight = this.rpx(72);
+    this.themeBtnSize = this.rpx(80);
     
-    this.scoreCardWidth = this.rpx(100);
-    this.scoreCardHeight = this.rpx(60);
+    this.scoreCardWidth = this.rpx(140);
+    this.scoreCardHeight = this.rpx(80);
     
     const titleHeight = this.titleFontSize + this.subtitleFontSize + this.rpx(16);
     const scoreCardsHeight = this.scoreCardHeight;
