@@ -131,23 +131,26 @@ class Game2048 {
     this.hintFontSize = this.rpx(20);
     this.actionBtnFontSize = this.rpx(22);
     
-    this.scoreCardPaddingV = this.rpx(12);
-    this.scoreCardPaddingH = this.rpx(16);
-    this.scoreCardRadius = this.rpx(14);
-    this.scoreCardsGap = this.rpx(32);
+    this.scoreCardPaddingV = this.rpx(16);
+    this.scoreCardPaddingH = this.rpx(20);
+    this.scoreCardRadius = this.rpx(20);
+    this.scoreCardsGap = this.rpx(40);
+
+    this.headerSectionMarginBottom = this.rpx(40);
+    this.titleRowMarginBottom = this.rpx(40);
+    this.hintMarginBottom = this.rpx(32);
+    this.actionSectionMarginTop = this.rpx(44);
+    this.actionBtnsGap = this.rpx(24);
+
+    this.newGameBtnWidth = this.rpx(220);
+    this.newGameBtnHeight = this.rpx(80);
+    this.themeBtnSize = this.rpx(88);
+
+    this.scoreCardWidth = this.rpx(160);
+    this.scoreCardHeight = this.rpx(96);
     
-    this.headerSectionMarginBottom = this.rpx(32);
-    this.titleRowMarginBottom = this.rpx(32);
-    this.hintMarginBottom = this.rpx(28);
-    this.actionSectionMarginTop = this.rpx(36);
-    this.actionBtnsGap = this.rpx(20);
-    
-    this.newGameBtnWidth = this.rpx(200);
-    this.newGameBtnHeight = this.rpx(72);
-    this.themeBtnSize = this.rpx(80);
-    
-    this.scoreCardWidth = this.rpx(140);
-    this.scoreCardHeight = this.rpx(80);
+    this.boardRadius = this.rpx(20);
+    this.cellRadius = this.rpx(12);
     
     const titleHeight = this.titleFontSize + this.subtitleFontSize + this.rpx(16);
     const scoreCardsHeight = this.scoreCardHeight;
@@ -620,23 +623,35 @@ class Game2048 {
   drawScoreCard(label, value, x, y, width, height) {
     const theme = this.isDark ? themes.dark : themes.light;
     const ctx = this.ctx;
-    
+
+    ctx.shadowColor = this.isDark ? 'rgba(0, 0, 0, 0.3)' : 'rgba(0, 0, 0, 0.08)';
+    ctx.shadowBlur = this.rpx(16);
+    ctx.shadowOffsetY = this.rpx(4);
+
     ctx.fillStyle = theme.scoreCardBg;
     this.drawRoundedRect(x, y, width, height, this.scoreCardRadius);
     ctx.fill();
-    
-    const gradient = ctx.createLinearGradient(x, y, x + width, y);
-    gradient.addColorStop(0, theme.scoreGradient[0]);
-    gradient.addColorStop(1, theme.scoreGradient[1]);
-    ctx.fillStyle = gradient;
-    ctx.fillRect(x, y, width, this.rpx(6));
-    
+
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetY = 0;
+
+    const accentWidth = width * 0.4;
+    const accentX = x + (width - accentWidth) / 2;
+    const accentGradient = ctx.createLinearGradient(accentX, y, accentX + accentWidth, y);
+    accentGradient.addColorStop(0, this.isDark ? 'rgba(126, 184, 230, 0.3)' : 'rgba(126, 184, 230, 0.25)');
+    accentGradient.addColorStop(0.5, this.isDark ? 'rgba(126, 184, 230, 0.6)' : 'rgba(126, 184, 230, 0.5)');
+    accentGradient.addColorStop(1, this.isDark ? 'rgba(126, 184, 230, 0.3)' : 'rgba(126, 184, 230, 0.25)');
+
+    ctx.fillStyle = accentGradient;
+    this.drawRoundedRect(accentX, y + this.rpx(8), accentWidth, this.rpx(4), this.rpx(2));
+    ctx.fill();
+
     ctx.fillStyle = theme.scoreLabel;
     ctx.font = `bold ${Math.round(this.scoreLabelFontSize)}px system-ui`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(label, x + width / 2, y + this.scoreCardPaddingV + this.scoreLabelFontSize / 2);
-    
+
     ctx.fillStyle = theme.scoreValue;
     ctx.font = `bold ${Math.round(this.scoreValueFontSize)}px system-ui`;
     ctx.fillText(value.toString(), x + width / 2, y + height - this.scoreCardPaddingV - this.scoreValueFontSize / 2);
@@ -656,16 +671,23 @@ class Game2048 {
   drawBoard() {
     const theme = this.isDark ? themes.dark : themes.light;
     const ctx = this.ctx;
-    
+
+    ctx.shadowColor = this.isDark ? 'rgba(0, 0, 0, 0.3)' : 'rgba(0, 0, 0, 0.08)';
+    ctx.shadowBlur = this.rpx(20);
+    ctx.shadowOffsetY = this.rpx(4);
+
     ctx.fillStyle = theme.boardBg;
-    this.drawRoundedRect(this.boardX, this.boardY, this.boardSize, this.boardSize, this.rpx(12));
+    this.drawRoundedRect(this.boardX, this.boardY, this.boardSize, this.boardSize, this.boardRadius);
     ctx.fill();
-    
+
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetY = 0;
+
     for (let y = 0; y < GRID_SIZE; y++) {
       for (let x = 0; x < GRID_SIZE; x++) {
         const pos = this.getTilePosition(x, y);
         ctx.fillStyle = theme.cellBg;
-        this.drawRoundedRect(pos.x, pos.y, this.cellSize, this.cellSize, this.rpx(8));
+        this.drawRoundedRect(pos.x, pos.y, this.cellSize, this.cellSize, this.cellRadius);
         ctx.fill();
       }
     }
@@ -673,25 +695,30 @@ class Game2048 {
   
   drawTiles() {
     const ctx = this.ctx;
-    
+
     for (const tile of this.tiles) {
       if (!tile) continue;
-      
+
       const pos = this.getTilePosition(tile.x, tile.y);
       const style = this.getTileStyle(tile.value);
       const fontSize = this.getFontSize(tile.value);
-      
+
+      ctx.shadowColor = this.isDark ? 'rgba(0, 0, 0, 0.4)' : 'rgba(0, 0, 0, 0.12)';
+      ctx.shadowBlur = this.rpx(10);
+      ctx.shadowOffsetY = this.rpx(3);
+
       if (style.glow) {
         ctx.shadowColor = style.glow;
-        ctx.shadowBlur = this.rpx(8);
+        ctx.shadowBlur = this.rpx(16);
       }
-      
+
       ctx.fillStyle = style.bg;
-      this.drawRoundedRect(pos.x, pos.y, this.cellSize, this.cellSize, this.rpx(8));
+      this.drawRoundedRect(pos.x, pos.y, this.cellSize, this.cellSize, this.cellRadius);
       ctx.fill();
-      
+
       ctx.shadowBlur = 0;
-      
+      ctx.shadowOffsetY = 0;
+
       ctx.fillStyle = style.text;
       ctx.font = `bold ${Math.round(fontSize)}px system-ui`;
       ctx.textAlign = 'center';
@@ -703,48 +730,69 @@ class Game2048 {
   drawActionButtons() {
     const theme = this.isDark ? themes.dark : themes.light;
     const ctx = this.ctx;
-    
+
     const totalActionWidth = this.newGameBtnWidth + this.actionBtnsGap + this.themeBtnSize;
     const actionStartX = this.gameX + (this.gameWidth - totalActionWidth) / 2;
-    
+
     const newGameBtnX = actionStartX;
     const newGameBtnY = this.actionY;
-    
+
+    ctx.shadowColor = this.isDark ? 'rgba(0, 0, 0, 0.4)' : 'rgba(126, 184, 230, 0.4)';
+    ctx.shadowBlur = this.rpx(16);
+    ctx.shadowOffsetY = this.rpx(6);
+
     ctx.fillStyle = theme.buttonBg;
-    this.drawRoundedRect(newGameBtnX, newGameBtnY, this.newGameBtnWidth, this.newGameBtnHeight, this.rpx(8));
+    this.drawRoundedRect(newGameBtnX, newGameBtnY, this.newGameBtnWidth, this.newGameBtnHeight, this.rpx(40));
     ctx.fill();
-    
+
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetY = 0;
+
     ctx.fillStyle = theme.buttonText;
     ctx.font = `bold ${Math.round(this.actionBtnFontSize)}px system-ui`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.letterSpacing = `${this.rpx(2)}px`;
     ctx.fillText('NEW GAME', newGameBtnX + this.newGameBtnWidth / 2, newGameBtnY + this.newGameBtnHeight / 2);
-    
+
     const themeBtnX = actionStartX + this.newGameBtnWidth + this.actionBtnsGap;
     const themeBtnY = this.actionY;
-    
+
+    ctx.shadowColor = this.isDark ? 'rgba(0, 0, 0, 0.3)' : 'rgba(0, 0, 0, 0.1)';
+    ctx.shadowBlur = this.rpx(12);
+    ctx.shadowOffsetY = this.rpx(4);
+
     ctx.fillStyle = theme.themeBtnBg;
     this.drawRoundedRect(themeBtnX, themeBtnY, this.themeBtnSize, this.themeBtnSize, this.themeBtnSize / 2);
     ctx.fill();
-    
-    ctx.font = `${Math.round(this.rpx(30))}px system-ui`;
+
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetY = 0;
+
+    ctx.font = `${Math.round(this.rpx(32))}px system-ui`;
     ctx.fillText(this.isDark ? '☀️' : '🌙', themeBtnX + this.themeBtnSize / 2, themeBtnY + this.themeBtnSize / 2);
   }
   
   drawOverlay() {
     if (!this.isGameOver && !(this.hasWon && !this.keepPlaying)) return;
-    
+
     const theme = this.isDark ? themes.dark : themes.light;
     const ctx = this.ctx;
-    
+
+    ctx.shadowColor = this.isDark ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.15)';
+    ctx.shadowBlur = this.rpx(24);
+    ctx.shadowOffsetY = this.rpx(8);
+
     ctx.fillStyle = theme.overlayBg;
-    this.drawRoundedRect(this.boardX, this.boardY, this.boardSize, this.boardSize, this.rpx(12));
+    this.drawRoundedRect(this.boardX, this.boardY, this.boardSize, this.boardSize, this.boardRadius);
     ctx.fill();
-    
+
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetY = 0;
+
     const centerX = this.boardX + this.boardSize / 2;
     const centerY = this.boardY + this.boardSize / 2;
-    
+
     let message, subMessage;
     if (this.isGameOver) {
       message = 'Game Over';
@@ -753,17 +801,17 @@ class Game2048 {
       message = 'You Win!';
       subMessage = 'Tap to continue';
     }
-    
+
     const gradient = ctx.createLinearGradient(centerX - this.rpx(100), centerY - this.rpx(40), centerX + this.rpx(100), centerY);
     gradient.addColorStop(0, theme.titleGradient[0]);
     gradient.addColorStop(1, theme.titleGradient[1]);
-    
+
     ctx.fillStyle = gradient;
     ctx.font = `bold ${Math.round(this.rpx(36))}px system-ui`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(message, centerX, centerY - this.rpx(20));
-    
+
     ctx.fillStyle = theme.scoreLabel;
     ctx.font = `${Math.round(this.rpx(16))}px system-ui`;
     ctx.fillText(subMessage, centerX, centerY + this.rpx(20));
