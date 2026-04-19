@@ -99,43 +99,90 @@ class Game2048 {
     this.gameLoop();
   }
   
+  rpx(pxValue) {
+    return (pxValue / 750) * this.canvas.width;
+  }
+  
   calculateDimensions() {
     const screenWidth = this.canvas.width;
     const screenHeight = this.canvas.height;
     
-    this.padding = screenWidth * 0.05;
+    this.rpxScale = screenWidth / 750;
     
-    this.headerHeight = 100;
-    this.scoreCardHeight = 60;
-    this.headerMarginBottom = 32;
+    this.maxGameWidth = this.rpx(700);
+    this.maxBoardWidth = this.rpx(640);
     
-    this.hintHeight = 30;
-    this.hintMarginBottom = 28;
+    this.paddingV = this.rpx(32);
+    this.paddingH = this.rpx(40);
     
-    this.boardSize = Math.min(
-      screenWidth - this.padding * 2,
-      screenHeight * 0.5
-    );
+    this.gameWidth = Math.min(screenWidth - this.paddingH * 2, this.maxGameWidth);
+    this.gameX = (screenWidth - this.gameWidth) / 2;
+    
+    this.boardSize = Math.min(this.gameWidth, this.maxBoardWidth);
+    this.boardX = this.gameX + (this.gameWidth - this.boardSize) / 2;
+    
     this.cellGap = this.boardSize * 0.025;
     this.cellSize = (this.boardSize - this.cellGap * (GRID_SIZE + 1)) / GRID_SIZE;
     
-    this.boardX = (screenWidth - this.boardSize) / 2;
+    this.titleFontSize = this.rpx(88);
+    this.subtitleFontSize = this.rpx(20);
+    this.scoreLabelFontSize = this.rpx(14);
+    this.scoreValueFontSize = this.rpx(36);
+    this.hintFontSize = this.rpx(20);
+    this.actionBtnFontSize = this.rpx(26);
     
-    let currentY = this.padding;
-    this.headerY = currentY;
-    currentY += this.headerHeight + this.headerMarginBottom;
+    this.scoreCardPaddingV = this.rpx(18);
+    this.scoreCardPaddingH = this.rpx(36);
+    this.scoreCardRadius = this.rpx(14);
+    this.scoreCardsGap = this.rpx(32);
     
-    this.hintY = currentY;
-    currentY += this.hintHeight + this.hintMarginBottom;
+    this.headerSectionMarginBottom = this.rpx(32);
+    this.titleRowMarginBottom = this.rpx(32);
+    this.hintMarginBottom = this.rpx(28);
+    this.actionSectionMarginTop = this.rpx(36);
+    this.actionBtnsGap = this.rpx(20);
+    
+    this.newGameBtnWidth = this.rpx(140);
+    this.newGameBtnHeight = this.rpx(44);
+    this.themeBtnSize = this.rpx(64);
+    
+    this.scoreCardWidth = this.rpx(100);
+    this.scoreCardHeight = this.rpx(60);
+    
+    const titleHeight = this.titleFontSize + this.subtitleFontSize + this.rpx(16);
+    const scoreCardsHeight = this.scoreCardHeight;
+    const headerSectionHeight = titleHeight + this.titleRowMarginBottom + scoreCardsHeight;
+    
+    const hintHeight = this.hintFontSize + this.hintMarginBottom;
+    
+    const actionSectionHeight = this.newGameBtnHeight;
+    
+    const totalContentHeight = 
+      headerSectionHeight + this.headerSectionMarginBottom +
+      hintHeight +
+      this.boardSize +
+      this.actionSectionMarginTop + actionSectionHeight;
+    
+    this.gameStartY = (screenHeight - totalContentHeight) / 2;
+    
+    let currentY = this.gameStartY;
+    
+    this.titleY = currentY + this.titleFontSize / 2;
+    this.subtitleY = this.titleY + this.titleFontSize / 2 + this.rpx(16) + this.subtitleFontSize / 2;
+    
+    currentY += titleHeight + this.titleRowMarginBottom;
+    
+    this.scoreCardsY = currentY;
+    
+    currentY += scoreCardsHeight + this.headerSectionMarginBottom;
+    
+    this.hintY = currentY + this.hintFontSize / 2;
+    currentY += this.hintFontSize + this.hintMarginBottom;
     
     this.boardY = currentY;
-    currentY += this.boardSize + 36;
+    currentY += this.boardSize + this.actionSectionMarginTop;
     
     this.actionY = currentY;
-    
-    this.themeBtnSize = 44;
-    this.newGameBtnWidth = 140;
-    this.newGameBtnHeight = 44;
   }
   
   loadTheme() {
@@ -272,8 +319,8 @@ class Game2048 {
   }
   
   checkButtonClick(x, y) {
-    const totalActionWidth = this.newGameBtnWidth + 20 + this.themeBtnSize;
-    const actionStartX = this.boardX + (this.boardSize - totalActionWidth) / 2;
+    const totalActionWidth = this.newGameBtnWidth + this.actionBtnsGap + this.themeBtnSize;
+    const actionStartX = this.gameX + (this.gameWidth - totalActionWidth) / 2;
     
     const newGameBtnX = actionStartX;
     const newGameBtnY = this.actionY;
@@ -283,7 +330,7 @@ class Game2048 {
       return;
     }
     
-    const themeBtnX = actionStartX + this.newGameBtnWidth + 20;
+    const themeBtnX = actionStartX + this.newGameBtnWidth + this.actionBtnsGap;
     const themeBtnY = this.actionY;
     if (x >= themeBtnX && x <= themeBtnX + this.themeBtnSize && 
         y >= themeBtnY && y <= themeBtnY + this.themeBtnSize) {
@@ -541,38 +588,33 @@ class Game2048 {
     const theme = this.isDark ? themes.dark : themes.light;
     const ctx = this.ctx;
     
-    const titleX = this.boardX;
-    const titleY = this.headerY + 40;
+    const titleX = this.gameX + this.gameWidth / 2;
     
-    const gradient = ctx.createLinearGradient(titleX, titleY - 40, titleX + 150, titleY);
+    const gradient = ctx.createLinearGradient(titleX - this.rpx(100), this.titleY - this.rpx(40), titleX + this.rpx(100), this.titleY);
     gradient.addColorStop(0, theme.titleGradient[0]);
     gradient.addColorStop(1, theme.titleGradient[1]);
     
     ctx.fillStyle = gradient;
-    ctx.font = 'bold 48px system-ui';
-    ctx.textAlign = 'left';
+    ctx.font = `bold ${Math.round(this.titleFontSize)}px system-ui`;
+    ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('2048', titleX, titleY);
+    ctx.fillText('2048', titleX, this.titleY);
     
     ctx.fillStyle = theme.subtitleText;
-    ctx.font = '12px system-ui';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('MACARON & NIGHT', titleX, titleY + 30);
+    ctx.font = `${Math.round(this.subtitleFontSize)}px system-ui`;
+    ctx.letterSpacing = `${this.rpx(4)}px`;
+    ctx.fillText('MACARON & NIGHT', titleX, this.subtitleY);
   }
   
   drawScoreCards() {
     const theme = this.isDark ? themes.dark : themes.light;
     const ctx = this.ctx;
     
-    const cardWidth = 100;
-    const cardHeight = 60;
-    const gap = 20;
-    const startX = this.boardX + this.boardSize - cardWidth * 2 - gap;
-    const startY = this.headerY + 10;
+    const totalWidth = this.scoreCardWidth * 2 + this.scoreCardsGap;
+    const startX = this.gameX + (this.gameWidth - totalWidth) / 2;
     
-    this.drawScoreCard('SCORE', this.score, startX, startY, cardWidth, cardHeight);
-    this.drawScoreCard('BEST', this.bestScore, startX + cardWidth + gap, startY, cardWidth, cardHeight);
+    this.drawScoreCard('SCORE', this.score, startX, this.scoreCardsY, this.scoreCardWidth, this.scoreCardHeight);
+    this.drawScoreCard('BEST', this.bestScore, startX + this.scoreCardWidth + this.scoreCardsGap, this.scoreCardsY, this.scoreCardWidth, this.scoreCardHeight);
   }
   
   drawScoreCard(label, value, x, y, width, height) {
@@ -580,24 +622,24 @@ class Game2048 {
     const ctx = this.ctx;
     
     ctx.fillStyle = theme.scoreCardBg;
-    this.drawRoundedRect(x, y, width, height, 8);
+    this.drawRoundedRect(x, y, width, height, this.scoreCardRadius);
     ctx.fill();
     
     const gradient = ctx.createLinearGradient(x, y, x + width, y);
     gradient.addColorStop(0, theme.scoreGradient[0]);
     gradient.addColorStop(1, theme.scoreGradient[1]);
     ctx.fillStyle = gradient;
-    ctx.fillRect(x, y, width, 4);
+    ctx.fillRect(x, y, width, this.rpx(6));
     
     ctx.fillStyle = theme.scoreLabel;
-    ctx.font = 'bold 10px system-ui';
+    ctx.font = `bold ${Math.round(this.scoreLabelFontSize)}px system-ui`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(label, x + width / 2, y + 18);
+    ctx.fillText(label, x + width / 2, y + this.scoreCardPaddingV + this.scoreLabelFontSize / 2);
     
     ctx.fillStyle = theme.scoreValue;
-    ctx.font = 'bold 22px system-ui';
-    ctx.fillText(value.toString(), x + width / 2, y + 42);
+    ctx.font = `bold ${Math.round(this.scoreValueFontSize)}px system-ui`;
+    ctx.fillText(value.toString(), x + width / 2, y + height - this.scoreCardPaddingV - this.scoreValueFontSize / 2);
   }
   
   drawHint() {
@@ -605,10 +647,10 @@ class Game2048 {
     const ctx = this.ctx;
     
     ctx.fillStyle = theme.hintText;
-    ctx.font = '14px system-ui';
+    ctx.font = `${Math.round(this.hintFontSize)}px system-ui`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('Join the numbers and get to the 2048!', this.boardX + this.boardSize / 2, this.hintY);
+    ctx.fillText('Join the numbers and get to the 2048!', this.gameX + this.gameWidth / 2, this.hintY);
   }
   
   drawBoard() {
@@ -616,14 +658,14 @@ class Game2048 {
     const ctx = this.ctx;
     
     ctx.fillStyle = theme.boardBg;
-    this.drawRoundedRect(this.boardX, this.boardY, this.boardSize, this.boardSize, 12);
+    this.drawRoundedRect(this.boardX, this.boardY, this.boardSize, this.boardSize, this.rpx(12));
     ctx.fill();
     
     for (let y = 0; y < GRID_SIZE; y++) {
       for (let x = 0; x < GRID_SIZE; x++) {
         const pos = this.getTilePosition(x, y);
         ctx.fillStyle = theme.cellBg;
-        this.drawRoundedRect(pos.x, pos.y, this.cellSize, this.cellSize, 8);
+        this.drawRoundedRect(pos.x, pos.y, this.cellSize, this.cellSize, this.rpx(8));
         ctx.fill();
       }
     }
@@ -641,11 +683,11 @@ class Game2048 {
       
       if (style.glow) {
         ctx.shadowColor = style.glow;
-        ctx.shadowBlur = 15;
+        ctx.shadowBlur = this.rpx(8);
       }
       
       ctx.fillStyle = style.bg;
-      this.drawRoundedRect(pos.x, pos.y, this.cellSize, this.cellSize, 8);
+      this.drawRoundedRect(pos.x, pos.y, this.cellSize, this.cellSize, this.rpx(8));
       ctx.fill();
       
       ctx.shadowBlur = 0;
@@ -662,30 +704,31 @@ class Game2048 {
     const theme = this.isDark ? themes.dark : themes.light;
     const ctx = this.ctx;
     
-    const totalActionWidth = this.newGameBtnWidth + 20 + this.themeBtnSize;
-    const actionStartX = this.boardX + (this.boardSize - totalActionWidth) / 2;
+    const totalActionWidth = this.newGameBtnWidth + this.actionBtnsGap + this.themeBtnSize;
+    const actionStartX = this.gameX + (this.gameWidth - totalActionWidth) / 2;
     
     const newGameBtnX = actionStartX;
     const newGameBtnY = this.actionY;
     
     ctx.fillStyle = theme.buttonBg;
-    this.drawRoundedRect(newGameBtnX, newGameBtnY, this.newGameBtnWidth, this.newGameBtnHeight, 8);
+    this.drawRoundedRect(newGameBtnX, newGameBtnY, this.newGameBtnWidth, this.newGameBtnHeight, this.rpx(8));
     ctx.fill();
     
     ctx.fillStyle = theme.buttonText;
-    ctx.font = 'bold 14px system-ui';
+    ctx.font = `bold ${Math.round(this.actionBtnFontSize)}px system-ui`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
+    ctx.letterSpacing = `${this.rpx(2)}px`;
     ctx.fillText('NEW GAME', newGameBtnX + this.newGameBtnWidth / 2, newGameBtnY + this.newGameBtnHeight / 2);
     
-    const themeBtnX = actionStartX + this.newGameBtnWidth + 20;
+    const themeBtnX = actionStartX + this.newGameBtnWidth + this.actionBtnsGap;
     const themeBtnY = this.actionY;
     
     ctx.fillStyle = theme.themeBtnBg;
-    this.drawRoundedRect(themeBtnX, themeBtnY, this.themeBtnSize, this.themeBtnSize, 22);
+    this.drawRoundedRect(themeBtnX, themeBtnY, this.themeBtnSize, this.themeBtnSize, this.themeBtnSize / 2);
     ctx.fill();
     
-    ctx.font = '20px system-ui';
+    ctx.font = `${Math.round(this.rpx(30))}px system-ui`;
     ctx.fillText(this.isDark ? '☀️' : '🌙', themeBtnX + this.themeBtnSize / 2, themeBtnY + this.themeBtnSize / 2);
   }
   
@@ -696,7 +739,7 @@ class Game2048 {
     const ctx = this.ctx;
     
     ctx.fillStyle = theme.overlayBg;
-    this.drawRoundedRect(this.boardX, this.boardY, this.boardSize, this.boardSize, 12);
+    this.drawRoundedRect(this.boardX, this.boardY, this.boardSize, this.boardSize, this.rpx(12));
     ctx.fill();
     
     const centerX = this.boardX + this.boardSize / 2;
@@ -711,19 +754,19 @@ class Game2048 {
       subMessage = 'Tap to continue';
     }
     
-    const gradient = ctx.createLinearGradient(centerX - 100, centerY - 40, centerX + 100, centerY);
+    const gradient = ctx.createLinearGradient(centerX - this.rpx(100), centerY - this.rpx(40), centerX + this.rpx(100), centerY);
     gradient.addColorStop(0, theme.titleGradient[0]);
     gradient.addColorStop(1, theme.titleGradient[1]);
     
     ctx.fillStyle = gradient;
-    ctx.font = 'bold 36px system-ui';
+    ctx.font = `bold ${Math.round(this.rpx(36))}px system-ui`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(message, centerX, centerY - 20);
+    ctx.fillText(message, centerX, centerY - this.rpx(20));
     
     ctx.fillStyle = theme.scoreLabel;
-    ctx.font = '16px system-ui';
-    ctx.fillText(subMessage, centerX, centerY + 20);
+    ctx.font = `${Math.round(this.rpx(16))}px system-ui`;
+    ctx.fillText(subMessage, centerX, centerY + this.rpx(20));
   }
   
   render() {
