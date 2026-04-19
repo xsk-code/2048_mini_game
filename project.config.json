@@ -47,9 +47,9 @@
     "swc": false,
     "disableSWC": true
   },
-  "compileType": "miniprogram",
+  "compileType": "game",
   "libVersion": "3.0.0",
-  "appid": "wx5f75d5ee72e6f54e",
+  "appid": "wxe544546395d46864",
   "projectname": "2048minigame",
   "condition": {},
   "simulatorPluginLibVersion": {},
