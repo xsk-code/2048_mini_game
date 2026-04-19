@@ -104,17 +104,38 @@ class Game2048 {
     const screenHeight = this.canvas.height;
     
     this.padding = screenWidth * 0.05;
-    this.boardSize = Math.min(screenWidth - this.padding * 2, screenHeight * 0.5);
+    
+    this.headerHeight = 100;
+    this.scoreCardHeight = 60;
+    this.headerMarginBottom = 32;
+    
+    this.hintHeight = 30;
+    this.hintMarginBottom = 28;
+    
+    this.boardSize = Math.min(
+      screenWidth - this.padding * 2,
+      screenHeight * 0.5
+    );
     this.cellGap = this.boardSize * 0.025;
     this.cellSize = (this.boardSize - this.cellGap * (GRID_SIZE + 1)) / GRID_SIZE;
     
     this.boardX = (screenWidth - this.boardSize) / 2;
-    this.boardY = screenHeight * 0.3;
     
-    this.headerY = this.padding;
-    this.scoreY = this.headerY + 60;
-    this.hintY = this.boardY - 50;
-    this.actionY = this.boardY + this.boardSize + 30;
+    let currentY = this.padding;
+    this.headerY = currentY;
+    currentY += this.headerHeight + this.headerMarginBottom;
+    
+    this.hintY = currentY;
+    currentY += this.hintHeight + this.hintMarginBottom;
+    
+    this.boardY = currentY;
+    currentY += this.boardSize + 36;
+    
+    this.actionY = currentY;
+    
+    this.themeBtnSize = 44;
+    this.newGameBtnWidth = 140;
+    this.newGameBtnHeight = 44;
   }
   
   loadTheme() {
@@ -191,10 +212,7 @@ class Game2048 {
       x,
       y,
       isNew: true,
-      merged: false,
-      scale: 0,
-      targetScale: 1,
-      appearProgress: 0
+      merged: false
     };
     
     this.board[y][x] = tile;
@@ -218,9 +236,6 @@ class Game2048 {
   
   setupTouchEvents() {
     wx.onTouchStart((e) => {
-      if (this.isGameOver && !this.keepPlaying) return;
-      if (this.isAnimating) return;
-      
       const touch = e.touches[0];
       this.touchStartX = touch.clientX;
       this.touchStartY = touch.clientY;
@@ -230,7 +245,6 @@ class Game2048 {
     
     wx.onTouchEnd((e) => {
       if (this.isGameOver && !this.keepPlaying) return;
-      if (this.isAnimating) return;
       if (!this.touchStartX || !this.touchStartY) return;
       
       const touch = e.changedTouches[0];
@@ -258,23 +272,29 @@ class Game2048 {
   }
   
   checkButtonClick(x, y) {
-    const themeBtnX = this.canvas.width - this.padding - 40;
-    const themeBtnY = this.headerY + 10;
-    if (x >= themeBtnX && x <= themeBtnX + 40 && y >= themeBtnY && y <= themeBtnY + 40) {
+    const totalActionWidth = this.newGameBtnWidth + 20 + this.themeBtnSize;
+    const actionStartX = this.boardX + (this.boardSize - totalActionWidth) / 2;
+    
+    const newGameBtnX = actionStartX;
+    const newGameBtnY = this.actionY;
+    if (x >= newGameBtnX && x <= newGameBtnX + this.newGameBtnWidth && 
+        y >= newGameBtnY && y <= newGameBtnY + this.newGameBtnHeight) {
+      this.initGame();
+      return;
+    }
+    
+    const themeBtnX = actionStartX + this.newGameBtnWidth + 20;
+    const themeBtnY = this.actionY;
+    if (x >= themeBtnX && x <= themeBtnX + this.themeBtnSize && 
+        y >= themeBtnY && y <= themeBtnY + this.themeBtnSize) {
       this.isDark = !this.isDark;
       this.saveTheme();
       return;
     }
     
-    const newGameBtnX = this.boardX + (this.boardSize - 140) / 2;
-    const newGameBtnY = this.actionY;
-    if (x >= newGameBtnX && x <= newGameBtnX + 140 && y >= newGameBtnY && y <= newGameBtnY + 44) {
-      this.initGame();
-      return;
-    }
-    
     if (this.isGameOver || (this.hasWon && !this.keepPlaying)) {
-      if (x >= this.boardX && x <= this.boardX + this.boardSize && y >= this.boardY && y <= this.boardY + this.boardSize) {
+      if (x >= this.boardX && x <= this.boardX + this.boardSize && 
+          y >= this.boardY && y <= this.boardY + this.boardSize) {
         if (this.isGameOver) {
           this.initGame();
         } else if (this.hasWon && !this.keepPlaying) {
@@ -536,7 +556,8 @@ class Game2048 {
     
     ctx.fillStyle = theme.subtitleText;
     ctx.font = '12px system-ui';
-    ctx.letterSpacing = '4px';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
     ctx.fillText('MACARON & NIGHT', titleX, titleY + 30);
   }
   
@@ -641,32 +662,31 @@ class Game2048 {
     const theme = this.isDark ? themes.dark : themes.light;
     const ctx = this.ctx;
     
-    const btnWidth = 140;
-    const btnHeight = 44;
-    const btnX = this.boardX + (this.boardSize - btnWidth) / 2;
-    const btnY = this.actionY;
+    const totalActionWidth = this.newGameBtnWidth + 20 + this.themeBtnSize;
+    const actionStartX = this.boardX + (this.boardSize - totalActionWidth) / 2;
+    
+    const newGameBtnX = actionStartX;
+    const newGameBtnY = this.actionY;
     
     ctx.fillStyle = theme.buttonBg;
-    this.drawRoundedRect(btnX, btnY, btnWidth, btnHeight, 8);
+    this.drawRoundedRect(newGameBtnX, newGameBtnY, this.newGameBtnWidth, this.newGameBtnHeight, 8);
     ctx.fill();
     
     ctx.fillStyle = theme.buttonText;
     ctx.font = 'bold 14px system-ui';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.letterSpacing = '2px';
-    ctx.fillText('NEW GAME', btnX + btnWidth / 2, btnY + btnHeight / 2);
+    ctx.fillText('NEW GAME', newGameBtnX + this.newGameBtnWidth / 2, newGameBtnY + this.newGameBtnHeight / 2);
     
-    const themeBtnX = btnX + btnWidth + 20;
-    const themeBtnY = btnY;
-    const themeBtnSize = 44;
+    const themeBtnX = actionStartX + this.newGameBtnWidth + 20;
+    const themeBtnY = this.actionY;
     
     ctx.fillStyle = theme.themeBtnBg;
-    this.drawRoundedRect(themeBtnX, themeBtnY, themeBtnSize, themeBtnSize, 22);
+    this.drawRoundedRect(themeBtnX, themeBtnY, this.themeBtnSize, this.themeBtnSize, 22);
     ctx.fill();
     
     ctx.font = '20px system-ui';
-    ctx.fillText(this.isDark ? '☀️' : '🌙', themeBtnX + themeBtnSize / 2, themeBtnY + themeBtnSize / 2);
+    ctx.fillText(this.isDark ? '☀️' : '🌙', themeBtnX + this.themeBtnSize / 2, themeBtnY + this.themeBtnSize / 2);
   }
   
   drawOverlay() {
@@ -706,29 +726,10 @@ class Game2048 {
     ctx.fillText(subMessage, centerX, centerY + 20);
   }
   
-  drawThemeButton() {
-    const theme = this.isDark ? themes.dark : themes.light;
-    const ctx = this.ctx;
-    
-    const btnX = this.canvas.width - this.padding - 40;
-    const btnY = this.headerY + 10;
-    const btnSize = 40;
-    
-    ctx.fillStyle = theme.themeBtnBg;
-    this.drawRoundedRect(btnX, btnY, btnSize, btnSize, 20);
-    ctx.fill();
-    
-    ctx.font = '18px system-ui';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(this.isDark ? '☀️' : '🌙', btnX + btnSize / 2, btnY + btnSize / 2);
-  }
-  
   render() {
     this.drawBackground();
     this.drawTitle();
     this.drawScoreCards();
-    this.drawThemeButton();
     this.drawHint();
     this.drawBoard();
     this.drawTiles();
