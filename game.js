@@ -76,6 +76,7 @@ class Game2048 {
     
     this.isDark = false;
     this.loadTheme();
+    this.setupShareMenu();
     
     this.board = [];
     this.score = 0;
@@ -205,6 +206,28 @@ class Game2048 {
     } catch (e) {
       console.error('Failed to save theme:', e);
     }
+  }
+
+  setupShareMenu() {
+    wx.showShareMenu({
+      withShareTicket: true,
+      menus: ['shareAppMessage', 'shareTimeline']
+    });
+
+    wx.onShareAppMessage(() => {
+      return {
+        title: '2048 - 马卡龙与夜晚',
+        imageUrl: '',
+        query: `score=${this.score}&best=${this.bestScore}`
+      };
+    });
+
+    wx.onShareTimeline(() => {
+      return {
+        title: `我的2048得分是${this.score}，最高记录${this.bestScore}！来挑战我吧~`,
+        query: `score=${this.score}&best=${this.bestScore}`
+      };
+    });
   }
   
   loadBestScore() {
