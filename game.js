@@ -839,43 +839,43 @@ class Game2048 {
       ctx.shadowBlur = 0;
       ctx.shadowOffsetY = 0;
       
-      const accentWidth = Math.round(card.width * 0.15);
-      const accentX = card.x + this.rpx(24);
-      const accentGradient = ctx.createLinearGradient(accentX, card.y + this.rpx(24), accentX, card.y + card.height - this.rpx(24));
-      accentGradient.addColorStop(0, theme.cardAccent[0]);
-      accentGradient.addColorStop(1, theme.cardAccent[1]);
+      const stripWidth = this.rpx(8);
+      const stripX = card.x + this.rpx(28);
+      const stripGradient = ctx.createLinearGradient(stripX, card.y + this.rpx(28), stripX, card.y + card.height - this.rpx(28));
+      stripGradient.addColorStop(0, theme.cardAccent[0]);
+      stripGradient.addColorStop(1, theme.cardAccent[1]);
       
-      ctx.fillStyle = accentGradient;
-      this.drawRoundedRect(accentX, card.y + this.rpx(24), accentWidth, card.height - this.rpx(48), this.rpx(12));
+      ctx.fillStyle = stripGradient;
+      this.drawRoundedRect(stripX, card.y + this.rpx(28), stripWidth, card.height - this.rpx(56), this.rpx(4));
       ctx.fill();
       
-      const labelX = card.x + this.rpx(80);
+      const labelX = card.x + this.rpx(56);
       const centerY = card.y + card.height / 2;
       
       ctx.fillStyle = theme.titleText;
-      ctx.font = `bold ${Math.round(this.rpx(48))}px system-ui`;
+      ctx.font = `bold ${Math.round(this.rpx(44))}px system-ui`;
       ctx.textAlign = 'left';
       ctx.textBaseline = 'middle';
-      ctx.fillText(card.label, labelX, centerY - this.rpx(16));
+      ctx.fillText(card.label, labelX, centerY - this.rpx(18));
       
       ctx.fillStyle = theme.subtitleText;
-      ctx.font = `${Math.round(this.rpx(22))}px system-ui`;
-      ctx.fillText(`目标: ${card.targetTile}`, labelX, centerY + this.rpx(20));
+      ctx.font = `${Math.round(this.rpx(20))}px system-ui`;
+      ctx.fillText(`目标: ${card.targetTile}`, labelX, centerY + this.rpx(18));
       
       const statsX = card.x + card.width - this.rpx(32);
       
       ctx.fillStyle = theme.scoreLabel;
-      ctx.font = `${Math.round(this.rpx(18))}px system-ui`;
+      ctx.font = `${Math.round(this.rpx(16))}px system-ui`;
       ctx.textAlign = 'right';
       ctx.fillText('BEST', statsX, centerY - this.rpx(16));
       
       ctx.fillStyle = theme.scoreValue;
-      ctx.font = `bold ${Math.round(this.rpx(32))}px system-ui`;
+      ctx.font = `bold ${Math.round(this.rpx(30))}px system-ui`;
       ctx.fillText(bestScore.toString(), statsX, centerY + this.rpx(12));
       
       if (hasSave) {
         const saveBadgeX = card.x + card.width - this.rpx(100);
-        const saveBadgeY = card.y + this.rpx(24);
+        const saveBadgeY = card.y + this.rpx(20);
         const badgeWidth = this.rpx(72);
         const badgeHeight = this.rpx(36);
         
