@@ -71,8 +71,13 @@ class Game2048 {
     this.ctx = this.canvas.getContext('2d');
     
     this.systemInfo = wx.getSystemInfoSync();
-    this.canvas.width = this.systemInfo.screenWidth;
-    this.canvas.height = this.systemInfo.screenHeight;
+    this.dpr = this.systemInfo.pixelRatio || 1;
+    this.screenWidth = this.systemInfo.screenWidth;
+    this.screenHeight = this.systemInfo.screenHeight;
+    
+    this.canvas.width = this.screenWidth * this.dpr;
+    this.canvas.height = this.screenHeight * this.dpr;
+    this.ctx.scale(this.dpr, this.dpr);
     
     this.isDark = false;
     this.loadTheme();
@@ -101,12 +106,12 @@ class Game2048 {
   }
   
   rpx(pxValue) {
-    return (pxValue / 750) * this.canvas.width;
+    return Math.round((pxValue / 750) * this.screenWidth);
   }
   
   calculateDimensions() {
-    const screenWidth = this.canvas.width;
-    const screenHeight = this.canvas.height;
+    const screenWidth = this.screenWidth;
+    const screenHeight = this.screenHeight;
     
     this.rpxScale = screenWidth / 750;
     
@@ -573,8 +578,8 @@ class Game2048 {
   
   getTilePosition(x, y) {
     return {
-      x: this.boardX + this.cellGap + x * (this.cellSize + this.cellGap),
-      y: this.boardY + this.cellGap + y * (this.cellSize + this.cellGap)
+      x: Math.round(this.boardX + this.cellGap + x * (this.cellSize + this.cellGap)),
+      y: Math.round(this.boardY + this.cellGap + y * (this.cellSize + this.cellGap))
     };
   }
   
@@ -591,6 +596,11 @@ class Game2048 {
   
   drawRoundedRect(x, y, width, height, radius) {
     const ctx = this.ctx;
+    x = Math.round(x);
+    y = Math.round(y);
+    width = Math.round(width);
+    height = Math.round(height);
+    radius = Math.round(radius);
     ctx.beginPath();
     ctx.moveTo(x + radius, y);
     ctx.lineTo(x + width - radius, y);
@@ -607,7 +617,7 @@ class Game2048 {
   drawBackground() {
     const theme = this.isDark ? themes.dark : themes.light;
     this.ctx.fillStyle = theme.background;
-    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    this.ctx.fillRect(0, 0, this.screenWidth, this.screenHeight);
   }
   
   drawTitle() {
@@ -647,9 +657,9 @@ class Game2048 {
     const theme = this.isDark ? themes.dark : themes.light;
     const ctx = this.ctx;
 
-    ctx.shadowColor = this.isDark ? 'rgba(0, 0, 0, 0.3)' : 'rgba(0, 0, 0, 0.08)';
-    ctx.shadowBlur = this.rpx(16);
-    ctx.shadowOffsetY = this.rpx(4);
+    ctx.shadowColor = this.isDark ? 'rgba(0, 0, 0, 0.25)' : 'rgba(0, 0, 0, 0.05)';
+    ctx.shadowBlur = this.isDark ? this.rpx(12) : this.rpx(8);
+    ctx.shadowOffsetY = this.isDark ? this.rpx(3) : this.rpx(2);
 
     ctx.fillStyle = theme.scoreCardBg;
     this.drawRoundedRect(x, y, width, height, this.scoreCardRadius);
@@ -658,8 +668,8 @@ class Game2048 {
     ctx.shadowBlur = 0;
     ctx.shadowOffsetY = 0;
 
-    const accentWidth = width * 0.4;
-    const accentX = x + (width - accentWidth) / 2;
+    const accentWidth = Math.round(width * 0.4);
+    const accentX = x + Math.round((width - accentWidth) / 2);
     const accentGradient = ctx.createLinearGradient(accentX, y, accentX + accentWidth, y);
     accentGradient.addColorStop(0, this.isDark ? 'rgba(126, 184, 230, 0.3)' : 'rgba(126, 184, 230, 0.25)');
     accentGradient.addColorStop(0.5, this.isDark ? 'rgba(126, 184, 230, 0.6)' : 'rgba(126, 184, 230, 0.5)');
@@ -695,9 +705,9 @@ class Game2048 {
     const theme = this.isDark ? themes.dark : themes.light;
     const ctx = this.ctx;
 
-    ctx.shadowColor = this.isDark ? 'rgba(0, 0, 0, 0.3)' : 'rgba(0, 0, 0, 0.08)';
-    ctx.shadowBlur = this.rpx(20);
-    ctx.shadowOffsetY = this.rpx(4);
+    ctx.shadowColor = this.isDark ? 'rgba(0, 0, 0, 0.3)' : 'rgba(0, 0, 0, 0.06)';
+    ctx.shadowBlur = this.isDark ? this.rpx(16) : this.rpx(10);
+    ctx.shadowOffsetY = this.isDark ? this.rpx(4) : this.rpx(2);
 
     ctx.fillStyle = theme.boardBg;
     this.drawRoundedRect(this.boardX, this.boardY, this.boardSize, this.boardSize, this.boardRadius);
@@ -726,13 +736,13 @@ class Game2048 {
       const style = this.getTileStyle(tile.value);
       const fontSize = this.getFontSize(tile.value);
 
-      ctx.shadowColor = this.isDark ? 'rgba(0, 0, 0, 0.4)' : 'rgba(0, 0, 0, 0.12)';
-      ctx.shadowBlur = this.rpx(10);
-      ctx.shadowOffsetY = this.rpx(3);
+      ctx.shadowColor = this.isDark ? 'rgba(0, 0, 0, 0.35)' : 'rgba(0, 0, 0, 0.08)';
+      ctx.shadowBlur = this.isDark ? this.rpx(8) : this.rpx(6);
+      ctx.shadowOffsetY = this.isDark ? this.rpx(2) : this.rpx(1);
 
       if (style.glow) {
         ctx.shadowColor = style.glow;
-        ctx.shadowBlur = this.rpx(16);
+        ctx.shadowBlur = this.isDark ? this.rpx(12) : this.rpx(10);
       }
 
       ctx.fillStyle = style.bg;
@@ -760,9 +770,9 @@ class Game2048 {
     const newGameBtnX = actionStartX;
     const newGameBtnY = this.actionY;
 
-    ctx.shadowColor = this.isDark ? 'rgba(0, 0, 0, 0.4)' : 'rgba(126, 184, 230, 0.4)';
-    ctx.shadowBlur = this.rpx(16);
-    ctx.shadowOffsetY = this.rpx(6);
+    ctx.shadowColor = this.isDark ? 'rgba(0, 0, 0, 0.35)' : 'rgba(126, 184, 230, 0.25)';
+    ctx.shadowBlur = this.isDark ? this.rpx(12) : this.rpx(8);
+    ctx.shadowOffsetY = this.isDark ? this.rpx(4) : this.rpx(2);
 
     ctx.fillStyle = theme.buttonBg;
     this.drawRoundedRect(newGameBtnX, newGameBtnY, this.newGameBtnWidth, this.newGameBtnHeight, this.rpx(40));
@@ -781,19 +791,19 @@ class Game2048 {
     const themeBtnX = actionStartX + this.newGameBtnWidth + this.actionBtnsGap;
     const themeBtnY = this.actionY;
 
-    ctx.shadowColor = this.isDark ? 'rgba(0, 0, 0, 0.3)' : 'rgba(0, 0, 0, 0.1)';
-    ctx.shadowBlur = this.rpx(12);
-    ctx.shadowOffsetY = this.rpx(4);
+    ctx.shadowColor = this.isDark ? 'rgba(0, 0, 0, 0.25)' : 'rgba(0, 0, 0, 0.06)';
+    ctx.shadowBlur = this.isDark ? this.rpx(10) : this.rpx(6);
+    ctx.shadowOffsetY = this.isDark ? this.rpx(3) : this.rpx(2);
 
     ctx.fillStyle = theme.themeBtnBg;
-    this.drawRoundedRect(themeBtnX, themeBtnY, this.themeBtnSize, this.themeBtnSize, this.themeBtnSize / 2);
+    this.drawRoundedRect(themeBtnX, themeBtnY, this.themeBtnSize, this.themeBtnSize, Math.round(this.themeBtnSize / 2));
     ctx.fill();
 
     ctx.shadowBlur = 0;
     ctx.shadowOffsetY = 0;
 
     ctx.font = `${Math.round(this.rpx(32))}px system-ui`;
-    ctx.fillText(this.isDark ? '☀️' : '🌙', themeBtnX + this.themeBtnSize / 2, themeBtnY + this.themeBtnSize / 2);
+    ctx.fillText(this.isDark ? '☀️' : '🌙', themeBtnX + Math.round(this.themeBtnSize / 2), themeBtnY + Math.round(this.themeBtnSize / 2));
   }
   
   drawOverlay() {
@@ -802,9 +812,9 @@ class Game2048 {
     const theme = this.isDark ? themes.dark : themes.light;
     const ctx = this.ctx;
 
-    ctx.shadowColor = this.isDark ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.15)';
-    ctx.shadowBlur = this.rpx(24);
-    ctx.shadowOffsetY = this.rpx(8);
+    ctx.shadowColor = this.isDark ? 'rgba(0, 0, 0, 0.4)' : 'rgba(0, 0, 0, 0.1)';
+    ctx.shadowBlur = this.isDark ? this.rpx(20) : this.rpx(12);
+    ctx.shadowOffsetY = this.isDark ? this.rpx(6) : this.rpx(3);
 
     ctx.fillStyle = theme.overlayBg;
     this.drawRoundedRect(this.boardX, this.boardY, this.boardSize, this.boardSize, this.boardRadius);
