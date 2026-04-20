@@ -1,3 +1,5 @@
+const { canBoardMove } = require('./game-logic');
+
 const GRID_SIZE = 4;
 
 const themes = {
@@ -87,8 +89,6 @@ class Game2048 {
     this.score = 0;
     this.bestScore = 0;
     this.isGameOver = false;
-    this.hasWon = false;
-    this.keepPlaying = false;
     this.tiles = [];
     this.tileId = 0;
     
@@ -258,8 +258,6 @@ class Game2048 {
     this.board = Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill(null));
     this.score = 0;
     this.isGameOver = false;
-    this.hasWon = false;
-    this.keepPlaying = false;
     this.tiles = [];
     this.tileId = 0;
     this.animatingTiles = [];
@@ -322,7 +320,7 @@ class Game2048 {
     });
     
     wx.onTouchEnd((e) => {
-      if (this.isGameOver && !this.keepPlaying) return;
+      if (this.isGameOver) return;
       if (!this.touchStartX || !this.touchStartY) return;
       
       const touch = e.changedTouches[0];
@@ -370,20 +368,15 @@ class Game2048 {
       return;
     }
     
-    if (this.isGameOver || (this.hasWon && !this.keepPlaying)) {
-      if (x >= this.boardX && x <= this.boardX + this.boardSize && 
-          y >= this.boardY && y <= this.boardY + this.boardSize) {
-        if (this.isGameOver) {
-          this.initGame();
-        } else if (this.hasWon && !this.keepPlaying) {
-          this.keepPlaying = true;
-        }
-      }
+    if (this.isGameOver &&
+        x >= this.boardX && x <= this.boardX + this.boardSize &&
+        y >= this.boardY && y <= this.boardY + this.boardSize) {
+      this.initGame();
     }
   }
   
   moveInDirection(direction) {
-    if (this.isGameOver && !this.keepPlaying) return;
+    if (this.isGameOver) return;
     if (this.isMoving) return;
     
     this.isMoving = true;
@@ -535,19 +528,7 @@ class Game2048 {
       
       setTimeout(() => {
         this.addRandomTile();
-        
-        if (!this.hasWon && !this.keepPlaying) {
-          for (let y = 0; y < GRID_SIZE; y++) {
-            for (let x = 0; x < GRID_SIZE; x++) {
-              if (board[y][x]?.value === 2048) {
-                this.hasWon = true;
-                this.isMoving = false;
-                return;
-              }
-            }
-          }
-        }
-        
+
         if (!this.canMove()) {
           this.isGameOver = true;
         }
@@ -559,14 +540,7 @@ class Game2048 {
   }
   
   canMove() {
-    for (let y = 0; y < GRID_SIZE; y++) {
-      for (let x = 0; x < GRID_SIZE; x++) {
-        if (!this.board[y][x]) return true;
-        if (x < GRID_SIZE - 1 && this.board[y][x]?.value === this.board[y][x + 1]?.value) return true;
-        if (y < GRID_SIZE - 1 && this.board[y][x]?.value === this.board[y + 1][x]?.value) return true;
-      }
-    }
-    return false;
+    return canBoardMove(this.board);
   }
   
   updateBestScore() {
@@ -807,7 +781,7 @@ class Game2048 {
   }
   
   drawOverlay() {
-    if (!this.isGameOver && !(this.hasWon && !this.keepPlaying)) return;
+    if (!this.isGameOver) return;
 
     const theme = this.isDark ? themes.dark : themes.light;
     const ctx = this.ctx;
@@ -826,14 +800,8 @@ class Game2048 {
     const centerX = this.boardX + this.boardSize / 2;
     const centerY = this.boardY + this.boardSize / 2;
 
-    let message, subMessage;
-    if (this.isGameOver) {
-      message = 'Game Over';
-      subMessage = `Score: ${this.score}`;
-    } else {
-      message = 'You Win!';
-      subMessage = 'Tap to continue';
-    }
+    const message = 'Game Over';
+    const subMessage = `Score: ${this.score}`;
 
     const gradient = ctx.createLinearGradient(centerX - this.rpx(100), centerY - this.rpx(40), centerX + this.rpx(100), centerY);
     gradient.addColorStop(0, theme.titleGradient[0]);
