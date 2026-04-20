@@ -1,8 +1,9 @@
-const TARGET_TILE = 2048;
+const DEFAULT_TARGET_TILE = 2048;
 
-function hasTargetTile(board, targetTile = TARGET_TILE) {
-  for (let y = 0; y < board.length; y++) {
-    for (let x = 0; x < board[y].length; x++) {
+function hasTargetTile(board, targetTile = DEFAULT_TARGET_TILE) {
+  const gridSize = board.length;
+  for (let y = 0; y < gridSize; y++) {
+    for (let x = 0; x < gridSize; x++) {
       if (board[y][x]?.value === targetTile) {
         return true;
       }
@@ -36,16 +37,21 @@ function canBoardMove(board) {
   return false;
 }
 
-function getBoardProgress(board, targetTile = TARGET_TILE) {
+function getBoardProgress(board, targetTile = DEFAULT_TARGET_TILE) {
   return {
     hasTargetTile: hasTargetTile(board, targetTile),
     isGameOver: !canBoardMove(board)
   };
 }
 
+function createEmptyBoard(gridSize) {
+  return Array(gridSize).fill(null).map(() => Array(gridSize).fill(null));
+}
+
 module.exports = {
-  TARGET_TILE,
+  DEFAULT_TARGET_TILE,
   canBoardMove,
   getBoardProgress,
-  hasTargetTile
+  hasTargetTile,
+  createEmptyBoard
 };

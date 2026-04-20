@@ -1,6 +1,18 @@
-const { canBoardMove } = require('./game-logic');
+const { canBoardMove, createEmptyBoard } = require('./game-logic');
+const { getModeById, getDefaultMode, getAllModes } = require('./mode-config');
+const { 
+  loadBestScore, 
+  saveBestScore, 
+  loadSaveState, 
+  saveSaveState, 
+  hasSaveState,
+  loadAllModesInfo
+} = require('./storage');
 
-const GRID_SIZE = 4;
+const SCENE = {
+  HOME: 'home',
+  GAME: 'game'
+};
 
 const themes = {
   light: {
@@ -20,6 +32,8 @@ const themes = {
     overlayBg: 'rgba(240, 248, 255, 0.95)',
     titleGradient: ['#7EB8E6', '#A8D4FF'],
     scoreGradient: ['#7EB8E6', '#A8D4FF'],
+    cardGradient: ['#E6F0F8', '#F0F8FF'],
+    cardAccent: ['#7EB8E6', '#A8D4FF'],
     tiles: {
       2: { bg: '#EEF5FF', text: '#4A5E72', glow: null },
       4: { bg: '#E4F0FF', text: '#4A5E72', glow: null },
@@ -31,7 +45,9 @@ const themes = {
       256: { bg: '#60D0A0', text: '#FFFFFF', glow: '#6CD4A0' },
       512: { bg: '#30C080', text: '#FFFFFF', glow: '#4CD090' },
       1024: { bg: '#00B090', text: '#FFFFFF', glow: '#3CAC78' },
-      2048: { bg: '#0090B0', text: '#FFFFFF', glow: '#2E8B57' }
+      2048: { bg: '#0090B0', text: '#FFFFFF', glow: '#2E8B57' },
+      4096: { bg: '#007090', text: '#FFFFFF', glow: '#1E6B47' },
+      8192: { bg: '#005070', text: '#FFFFFF', glow: '#0E4B37' }
     }
   },
   dark: {
@@ -51,6 +67,8 @@ const themes = {
     overlayBg: 'rgba(13, 27, 42, 0.95)',
     titleGradient: ['#88D8B0', '#6CD4A0'],
     scoreGradient: ['#7EB8E6', '#A8D4FF'],
+    cardGradient: ['#1B3A5C', '#0D1B2A'],
+    cardAccent: ['#88D8B0', '#6CD4A0'],
     tiles: {
       2: { bg: '#2D2D3A', text: '#E8F0F8', glow: null },
       4: { bg: '#3D3D52', text: '#E8F0F8', glow: null },
@@ -62,7 +80,9 @@ const themes = {
       256: { bg: '#6CD4A0', text: '#FFFFFF', glow: '#6CD4A0' },
       512: { bg: '#4CD090', text: '#FFFFFF', glow: '#4CD090' },
       1024: { bg: '#3CAC78', text: '#FFFFFF', glow: '#3CAC78' },
-      2048: { bg: '#2E8B57', text: '#FFFFFF', glow: '#2E8B57' }
+      2048: { bg: '#2E8B57', text: '#FFFFFF', glow: '#2E8B57' },
+      4096: { bg: '#1E6B47', text: '#FFFFFF', glow: '#1E6B47' },
+      8192: { bg: '#0E4B37', text: '#FFFFFF', glow: '#0E4B37' }
     }
   }
 };
@@ -85,6 +105,9 @@ class Game2048 {
     this.loadTheme();
     this.setupShareMenu();
     
+    this.currentScene = SCENE.HOME;
+    this.currentMode = null;
+    
     this.board = [];
     this.score = 0;
     this.bestScore = 0;
@@ -99,14 +122,20 @@ class Game2048 {
     this.animatingTiles = [];
     this.isAnimating = false;
     
+    this.modeCards = [];
+    
     this.calculateDimensions();
-    this.initGame();
+    this.initHome();
     this.setupTouchEvents();
     this.gameLoop();
   }
   
   rpx(pxValue) {
     return Math.round((pxValue / 750) * this.screenWidth);
+  }
+  
+  get gridSize() {
+    return this.currentMode ? this.currentMode.gridSize : 4;
   }
   
   calculateDimensions() {
@@ -128,7 +157,7 @@ class Game2048 {
     this.boardX = this.gameX + (this.gameWidth - this.boardSize) / 2;
     
     this.cellGap = this.boardSize * 0.025;
-    this.cellSize = (this.boardSize - this.cellGap * (GRID_SIZE + 1)) / GRID_SIZE;
+    this.cellSize = (this.boardSize - this.cellGap * (this.gridSize + 1)) / this.gridSize;
     
     this.titleFontSize = this.rpx(88);
     this.subtitleFontSize = this.rpx(20);
@@ -151,6 +180,7 @@ class Game2048 {
     this.newGameBtnWidth = this.rpx(220);
     this.newGameBtnHeight = this.rpx(80);
     this.themeBtnSize = this.rpx(88);
+    this.homeBtnSize = this.rpx(88);
 
     this.scoreCardWidth = this.rpx(160);
     this.scoreCardHeight = this.rpx(96);
@@ -158,6 +188,15 @@ class Game2048 {
     this.boardRadius = this.rpx(20);
     this.cellRadius = this.rpx(12);
     
+    this.cardWidth = this.rpx(600);
+    this.cardHeight = this.rpx(180);
+    this.cardRadius = this.rpx(32);
+    this.cardGap = this.rpx(32);
+    
+    this.recalculateGameLayout();
+  }
+  
+  recalculateGameLayout() {
     const titleHeight = this.titleFontSize + this.subtitleFontSize + this.rpx(16);
     const scoreCardsHeight = this.scoreCardHeight;
     const headerSectionHeight = titleHeight + this.titleRowMarginBottom + scoreCardsHeight;
@@ -172,7 +211,7 @@ class Game2048 {
       this.boardSize +
       this.actionSectionMarginTop + actionSectionHeight;
     
-    this.gameStartY = (screenHeight - totalContentHeight) / 2;
+    this.gameStartY = (this.screenHeight - totalContentHeight) / 2;
     
     let currentY = this.gameStartY;
     
@@ -192,6 +231,33 @@ class Game2048 {
     currentY += this.boardSize + this.actionSectionMarginTop;
     
     this.actionY = currentY;
+  }
+  
+  recalculateHomeLayout() {
+    const modes = getAllModes();
+    const totalCardsHeight = modes.length * this.cardHeight + (modes.length - 1) * this.cardGap;
+    const headerHeight = this.titleFontSize + this.subtitleFontSize + this.rpx(16) + this.rpx(60);
+    
+    const totalContentHeight = headerHeight + totalCardsHeight;
+    const startY = (this.screenHeight - totalContentHeight) / 2;
+    
+    let currentY = startY;
+    
+    this.homeTitleY = currentY + this.titleFontSize / 2;
+    this.homeSubtitleY = this.homeTitleY + this.titleFontSize / 2 + this.rpx(16) + this.subtitleFontSize / 2;
+    
+    currentY += headerHeight;
+    
+    this.modeCards = modes.map((mode, index) => {
+      const card = {
+        ...mode,
+        x: this.gameX + (this.gameWidth - this.cardWidth) / 2,
+        y: currentY + index * (this.cardHeight + this.cardGap),
+        width: this.cardWidth,
+        height: this.cardHeight
+      };
+      return card;
+    });
   }
   
   loadTheme() {
@@ -235,27 +301,50 @@ class Game2048 {
     });
   }
   
-  loadBestScore() {
-    try {
-      const saved = wx.getStorageSync('2048-best');
-      if (saved) {
-        this.bestScore = parseInt(saved, 10) || 0;
-      }
-    } catch (e) {
-      console.error('Failed to load best score:', e);
+  initHome() {
+    this.currentScene = SCENE.HOME;
+    this.recalculateHomeLayout();
+  }
+  
+  enterMode(modeId) {
+    this.currentMode = getModeById(modeId);
+    this.calculateDimensions();
+    
+    const savedState = loadSaveState(modeId);
+    
+    if (savedState) {
+      this.board = savedState.board;
+      this.score = savedState.score;
+      this.isGameOver = savedState.isGameOver || false;
+      this.tileId = savedState.tileId || 0;
+      this.tiles = this.getTiles();
+    } else {
+      this.initGame();
+    }
+    
+    this.bestScore = loadBestScore(modeId);
+    this.currentScene = SCENE.GAME;
+  }
+  
+  saveCurrentState() {
+    if (this.currentMode && this.board.length > 0) {
+      saveSaveState(this.currentMode.id, {
+        board: this.board,
+        score: this.score,
+        isGameOver: this.isGameOver,
+        tileId: this.tileId
+      });
     }
   }
   
-  saveBestScore() {
-    try {
-      wx.setStorageSync('2048-best', this.bestScore.toString());
-    } catch (e) {
-      console.error('Failed to save best score:', e);
-    }
+  goBackHome() {
+    this.saveCurrentState();
+    this.currentMode = null;
+    this.initHome();
   }
   
   initGame() {
-    this.board = Array(GRID_SIZE).fill(null).map(() => Array(GRID_SIZE).fill(null));
+    this.board = createEmptyBoard(this.gridSize);
     this.score = 0;
     this.isGameOver = false;
     this.tiles = [];
@@ -263,15 +352,18 @@ class Game2048 {
     this.animatingTiles = [];
     this.isAnimating = false;
     
-    this.loadBestScore();
+    if (this.currentMode) {
+      this.bestScore = loadBestScore(this.currentMode.id);
+    }
+    
     this.addRandomTile();
     this.addRandomTile();
   }
   
   addRandomTile() {
     const emptyCells = [];
-    for (let y = 0; y < GRID_SIZE; y++) {
-      for (let x = 0; x < GRID_SIZE; x++) {
+    for (let y = 0; y < this.gridSize; y++) {
+      for (let x = 0; x < this.gridSize; x++) {
         if (!this.board[y][x]) {
           emptyCells.push({ x, y });
         }
@@ -299,8 +391,8 @@ class Game2048 {
   
   getTiles() {
     const result = [];
-    for (let y = 0; y < GRID_SIZE; y++) {
-      for (let x = 0; x < GRID_SIZE; x++) {
+    for (let y = 0; y < this.gridSize; y++) {
+      for (let x = 0; x < this.gridSize; x++) {
         const tile = this.board[y]?.[x];
         if (tile) {
           result.push({ ...tile, x, y });
@@ -320,6 +412,7 @@ class Game2048 {
     });
     
     wx.onTouchEnd((e) => {
+      if (this.currentScene !== SCENE.GAME) return;
       if (this.isGameOver) return;
       if (!this.touchStartX || !this.touchStartY) return;
       
@@ -348,7 +441,18 @@ class Game2048 {
   }
   
   checkButtonClick(x, y) {
-    const totalActionWidth = this.newGameBtnWidth + this.actionBtnsGap + this.themeBtnSize;
+    if (this.currentScene === SCENE.HOME) {
+      for (const card of this.modeCards) {
+        if (x >= card.x && x <= card.x + card.width &&
+            y >= card.y && y <= card.y + card.height) {
+          this.enterMode(card.id);
+          return;
+        }
+      }
+      return;
+    }
+    
+    const totalActionWidth = this.newGameBtnWidth + this.actionBtnsGap + this.homeBtnSize + this.actionBtnsGap + this.themeBtnSize;
     const actionStartX = this.gameX + (this.gameWidth - totalActionWidth) / 2;
     
     const newGameBtnX = actionStartX;
@@ -359,7 +463,15 @@ class Game2048 {
       return;
     }
     
-    const themeBtnX = actionStartX + this.newGameBtnWidth + this.actionBtnsGap;
+    const homeBtnX = actionStartX + this.newGameBtnWidth + this.actionBtnsGap;
+    const homeBtnY = this.actionY;
+    if (x >= homeBtnX && x <= homeBtnX + this.homeBtnSize && 
+        y >= homeBtnY && y <= homeBtnY + this.homeBtnSize) {
+      this.goBackHome();
+      return;
+    }
+    
+    const themeBtnX = actionStartX + this.newGameBtnWidth + this.actionBtnsGap + this.homeBtnSize + this.actionBtnsGap;
     const themeBtnY = this.actionY;
     if (x >= themeBtnX && x <= themeBtnX + this.themeBtnSize && 
         y >= themeBtnY && y <= themeBtnY + this.themeBtnSize) {
@@ -384,8 +496,8 @@ class Game2048 {
     const board = JSON.parse(JSON.stringify(this.board));
     let scoreGain = 0;
     
-    for (let y = 0; y < GRID_SIZE; y++) {
-      for (let x = 0; x < GRID_SIZE; x++) {
+    for (let y = 0; y < this.gridSize; y++) {
+      for (let x = 0; x < this.gridSize; x++) {
         if (board[y][x]) {
           board[y][x].merged = false;
           board[y][x].isNew = false;
@@ -396,7 +508,7 @@ class Game2048 {
     const oldBoard = JSON.stringify(board);
     
     if (direction === 'left') {
-      for (let y = 0; y < GRID_SIZE; y++) {
+      for (let y = 0; y < this.gridSize; y++) {
         const row = board[y].filter(t => t !== null);
         const newRow = [];
         let i = 0;
@@ -420,11 +532,11 @@ class Game2048 {
             i++;
           }
         }
-        while (newRow.length < GRID_SIZE) newRow.push(null);
+        while (newRow.length < this.gridSize) newRow.push(null);
         board[y] = newRow;
       }
     } else if (direction === 'right') {
-      for (let y = 0; y < GRID_SIZE; y++) {
+      for (let y = 0; y < this.gridSize; y++) {
         const row = board[y].filter(t => t !== null).reverse();
         const newRow = [];
         let i = 0;
@@ -433,7 +545,7 @@ class Game2048 {
             const merged = {
               id: ++this.tileId,
               value: row[i].value * 2,
-              x: GRID_SIZE - 1 - newRow.length,
+              x: this.gridSize - 1 - newRow.length,
               y,
               merged: true,
               isNew: false
@@ -442,19 +554,19 @@ class Game2048 {
             scoreGain += merged.value;
             i += 2;
           } else {
-            row[i].x = GRID_SIZE - 1 - newRow.length;
+            row[i].x = this.gridSize - 1 - newRow.length;
             row[i].y = y;
             newRow.push(row[i]);
             i++;
           }
         }
-        while (newRow.length < GRID_SIZE) newRow.push(null);
+        while (newRow.length < this.gridSize) newRow.push(null);
         board[y] = newRow.reverse();
       }
     } else if (direction === 'up') {
-      for (let x = 0; x < GRID_SIZE; x++) {
+      for (let x = 0; x < this.gridSize; x++) {
         const col = [];
-        for (let y = 0; y < GRID_SIZE; y++) {
+        for (let y = 0; y < this.gridSize; y++) {
           if (board[y][x]) col.push(board[y][x]);
         }
         const newCol = [];
@@ -479,15 +591,15 @@ class Game2048 {
             i++;
           }
         }
-        while (newCol.length < GRID_SIZE) newCol.push(null);
-        for (let y = 0; y < GRID_SIZE; y++) {
+        while (newCol.length < this.gridSize) newCol.push(null);
+        for (let y = 0; y < this.gridSize; y++) {
           board[y][x] = newCol[y];
         }
       }
     } else if (direction === 'down') {
-      for (let x = 0; x < GRID_SIZE; x++) {
+      for (let x = 0; x < this.gridSize; x++) {
         const col = [];
-        for (let y = GRID_SIZE - 1; y >= 0; y--) {
+        for (let y = this.gridSize - 1; y >= 0; y--) {
           if (board[y][x]) col.push(board[y][x]);
         }
         const newCol = [];
@@ -498,7 +610,7 @@ class Game2048 {
               id: ++this.tileId,
               value: col[i].value * 2,
               x,
-              y: GRID_SIZE - 1 - newCol.length,
+              y: this.gridSize - 1 - newCol.length,
               merged: true,
               isNew: false
             };
@@ -507,14 +619,14 @@ class Game2048 {
             i += 2;
           } else {
             col[i].x = x;
-            col[i].y = GRID_SIZE - 1 - newCol.length;
+            col[i].y = this.gridSize - 1 - newCol.length;
             newCol.push(col[i]);
             i++;
           }
         }
-        while (newCol.length < GRID_SIZE) newCol.push(null);
-        for (let y = 0; y < GRID_SIZE; y++) {
-          board[y][x] = newCol[GRID_SIZE - 1 - y];
+        while (newCol.length < this.gridSize) newCol.push(null);
+        for (let y = 0; y < this.gridSize; y++) {
+          board[y][x] = newCol[this.gridSize - 1 - y];
         }
       }
     }
@@ -528,6 +640,7 @@ class Game2048 {
       
       setTimeout(() => {
         this.addRandomTile();
+        this.saveCurrentState();
 
         if (!this.canMove()) {
           this.isGameOver = true;
@@ -544,9 +657,9 @@ class Game2048 {
   }
   
   updateBestScore() {
-    if (this.score > this.bestScore) {
+    if (this.currentMode && this.score > this.bestScore) {
       this.bestScore = this.score;
-      this.saveBestScore();
+      saveBestScore(this.currentMode.id, this.bestScore);
     }
   }
   
@@ -616,6 +729,28 @@ class Game2048 {
     ctx.fillText('MACARON & NIGHT', titleX, this.subtitleY);
   }
   
+  drawHomeTitle() {
+    const theme = this.isDark ? themes.dark : themes.light;
+    const ctx = this.ctx;
+    
+    const titleX = this.gameX + this.gameWidth / 2;
+    
+    const gradient = ctx.createLinearGradient(titleX - this.rpx(120), this.homeTitleY - this.rpx(50), titleX + this.rpx(120), this.homeTitleY);
+    gradient.addColorStop(0, theme.titleGradient[0]);
+    gradient.addColorStop(1, theme.titleGradient[1]);
+    
+    ctx.fillStyle = gradient;
+    ctx.font = `bold ${Math.round(this.titleFontSize * 1.1)}px system-ui`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('2048', titleX, this.homeTitleY);
+    
+    ctx.fillStyle = theme.subtitleText;
+    ctx.font = `${Math.round(this.subtitleFontSize)}px system-ui`;
+    ctx.letterSpacing = `${this.rpx(4)}px`;
+    ctx.fillText('CHOOSE YOUR MODE', titleX, this.homeSubtitleY);
+  }
+  
   drawScoreCards() {
     const theme = this.isDark ? themes.dark : themes.light;
     const ctx = this.ctx;
@@ -668,11 +803,97 @@ class Game2048 {
     const theme = this.isDark ? themes.dark : themes.light;
     const ctx = this.ctx;
     
+    const targetText = this.currentMode ? 
+      `Join the numbers and get to the ${this.currentMode.targetTile}!` :
+      'Join the numbers and get to the 2048!';
+    
     ctx.fillStyle = theme.hintText;
     ctx.font = `${Math.round(this.hintFontSize)}px system-ui`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('Join the numbers and get to the 2048!', this.gameX + this.gameWidth / 2, this.hintY);
+    ctx.fillText(targetText, this.gameX + this.gameWidth / 2, this.hintY);
+  }
+  
+  drawModeCards() {
+    const theme = this.isDark ? themes.dark : themes.light;
+    const ctx = this.ctx;
+    const modesInfo = loadAllModesInfo();
+    
+    for (const card of this.modeCards) {
+      const modeInfo = modesInfo.find(m => m.id === card.id) || card;
+      const hasSave = modeInfo.hasSave;
+      const bestScore = modeInfo.bestScore;
+      
+      ctx.shadowColor = this.isDark ? 'rgba(0, 0, 0, 0.35)' : 'rgba(126, 184, 230, 0.15)';
+      ctx.shadowBlur = this.isDark ? this.rpx(16) : this.rpx(12);
+      ctx.shadowOffsetY = this.isDark ? this.rpx(6) : this.rpx(4);
+      
+      const cardGradient = ctx.createLinearGradient(card.x, card.y, card.x + card.width, card.y + card.height);
+      cardGradient.addColorStop(0, theme.cardGradient[0]);
+      cardGradient.addColorStop(1, theme.cardGradient[1]);
+      
+      ctx.fillStyle = cardGradient;
+      this.drawRoundedRect(card.x, card.y, card.width, card.height, this.cardRadius);
+      ctx.fill();
+      
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetY = 0;
+      
+      const accentWidth = Math.round(card.width * 0.15);
+      const accentX = card.x + this.rpx(24);
+      const accentGradient = ctx.createLinearGradient(accentX, card.y + this.rpx(24), accentX, card.y + card.height - this.rpx(24));
+      accentGradient.addColorStop(0, theme.cardAccent[0]);
+      accentGradient.addColorStop(1, theme.cardAccent[1]);
+      
+      ctx.fillStyle = accentGradient;
+      this.drawRoundedRect(accentX, card.y + this.rpx(24), accentWidth, card.height - this.rpx(48), this.rpx(12));
+      ctx.fill();
+      
+      const labelX = card.x + this.rpx(80);
+      const centerY = card.y + card.height / 2;
+      
+      ctx.fillStyle = theme.titleText;
+      ctx.font = `bold ${Math.round(this.rpx(48))}px system-ui`;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(card.label, labelX, centerY - this.rpx(16));
+      
+      ctx.fillStyle = theme.subtitleText;
+      ctx.font = `${Math.round(this.rpx(22))}px system-ui`;
+      ctx.fillText(`目标: ${card.targetTile}`, labelX, centerY + this.rpx(20));
+      
+      const statsX = card.x + card.width - this.rpx(32);
+      
+      ctx.fillStyle = theme.scoreLabel;
+      ctx.font = `${Math.round(this.rpx(18))}px system-ui`;
+      ctx.textAlign = 'right';
+      ctx.fillText('BEST', statsX, centerY - this.rpx(16));
+      
+      ctx.fillStyle = theme.scoreValue;
+      ctx.font = `bold ${Math.round(this.rpx(32))}px system-ui`;
+      ctx.fillText(bestScore.toString(), statsX, centerY + this.rpx(12));
+      
+      if (hasSave) {
+        const saveBadgeX = card.x + card.width - this.rpx(100);
+        const saveBadgeY = card.y + this.rpx(24);
+        const badgeWidth = this.rpx(72);
+        const badgeHeight = this.rpx(36);
+        
+        const badgeGradient = ctx.createLinearGradient(saveBadgeX, saveBadgeY, saveBadgeX + badgeWidth, saveBadgeY);
+        badgeGradient.addColorStop(0, theme.cardAccent[0]);
+        badgeGradient.addColorStop(1, theme.cardAccent[1]);
+        
+        ctx.fillStyle = badgeGradient;
+        this.drawRoundedRect(saveBadgeX, saveBadgeY, badgeWidth, badgeHeight, this.rpx(18));
+        ctx.fill();
+        
+        ctx.fillStyle = this.isDark ? '#0D1B2A' : '#FFFFFF';
+        ctx.font = `bold ${Math.round(this.rpx(16))}px system-ui`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('继续', saveBadgeX + badgeWidth / 2, saveBadgeY + badgeHeight / 2);
+      }
+    }
   }
   
   drawBoard() {
@@ -690,8 +911,8 @@ class Game2048 {
     ctx.shadowBlur = 0;
     ctx.shadowOffsetY = 0;
 
-    for (let y = 0; y < GRID_SIZE; y++) {
-      for (let x = 0; x < GRID_SIZE; x++) {
+    for (let y = 0; y < this.gridSize; y++) {
+      for (let x = 0; x < this.gridSize; x++) {
         const pos = this.getTilePosition(x, y);
         ctx.fillStyle = theme.cellBg;
         this.drawRoundedRect(pos.x, pos.y, this.cellSize, this.cellSize, this.cellRadius);
@@ -738,7 +959,7 @@ class Game2048 {
     const theme = this.isDark ? themes.dark : themes.light;
     const ctx = this.ctx;
 
-    const totalActionWidth = this.newGameBtnWidth + this.actionBtnsGap + this.themeBtnSize;
+    const totalActionWidth = this.newGameBtnWidth + this.actionBtnsGap + this.homeBtnSize + this.actionBtnsGap + this.themeBtnSize;
     const actionStartX = this.gameX + (this.gameWidth - totalActionWidth) / 2;
 
     const newGameBtnX = actionStartX;
@@ -762,7 +983,24 @@ class Game2048 {
     ctx.letterSpacing = `${this.rpx(2)}px`;
     ctx.fillText('NEW GAME', newGameBtnX + this.newGameBtnWidth / 2, newGameBtnY + this.newGameBtnHeight / 2);
 
-    const themeBtnX = actionStartX + this.newGameBtnWidth + this.actionBtnsGap;
+    const homeBtnX = actionStartX + this.newGameBtnWidth + this.actionBtnsGap;
+    const homeBtnY = this.actionY;
+
+    ctx.shadowColor = this.isDark ? 'rgba(0, 0, 0, 0.25)' : 'rgba(0, 0, 0, 0.06)';
+    ctx.shadowBlur = this.isDark ? this.rpx(10) : this.rpx(6);
+    ctx.shadowOffsetY = this.isDark ? this.rpx(3) : this.rpx(2);
+
+    ctx.fillStyle = theme.themeBtnBg;
+    this.drawRoundedRect(homeBtnX, homeBtnY, this.homeBtnSize, this.homeBtnSize, Math.round(this.homeBtnSize / 2));
+    ctx.fill();
+
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetY = 0;
+
+    ctx.font = `${Math.round(this.rpx(28))}px system-ui`;
+    ctx.fillText('🏠', homeBtnX + Math.round(this.homeBtnSize / 2), homeBtnY + Math.round(this.homeBtnSize / 2));
+
+    const themeBtnX = actionStartX + this.newGameBtnWidth + this.actionBtnsGap + this.homeBtnSize + this.actionBtnsGap;
     const themeBtnY = this.actionY;
 
     ctx.shadowColor = this.isDark ? 'rgba(0, 0, 0, 0.25)' : 'rgba(0, 0, 0, 0.06)';
@@ -818,7 +1056,13 @@ class Game2048 {
     ctx.fillText(subMessage, centerX, centerY + this.rpx(20));
   }
   
-  render() {
+  renderHome() {
+    this.drawBackground();
+    this.drawHomeTitle();
+    this.drawModeCards();
+  }
+  
+  renderGame() {
     this.drawBackground();
     this.drawTitle();
     this.drawScoreCards();
@@ -827,6 +1071,14 @@ class Game2048 {
     this.drawTiles();
     this.drawActionButtons();
     this.drawOverlay();
+  }
+  
+  render() {
+    if (this.currentScene === SCENE.HOME) {
+      this.renderHome();
+    } else {
+      this.renderGame();
+    }
   }
   
   gameLoop() {
