@@ -26,6 +26,7 @@ const {
   calculateBonus,
   getTargetScore,
   countRemainingStars,
+  isBoardFull,
   processElimination
 } = require('./popstar-logic');
 const { getSoundManager } = require('./sound-manager');
@@ -438,10 +439,20 @@ class Game2048 {
     this.currentScene = SCENE.GAME_POPSTAR;
   }
   
+  createFullPopstarBoard(colorCount) {
+    let board;
+    let attempts = 0;
+    do {
+      board = createBoard(colorCount);
+      attempts++;
+    } while (!isBoardFull(board) && attempts < 10);
+    return board;
+  }
+  
   initPopstarGame() {
     this.popstarLevel = 1;
     const colorCount = getColorCount(this.popstarLevel);
-    this.popstarBoard = createBoard(colorCount);
+    this.popstarBoard = this.createFullPopstarBoard(colorCount);
     this.popstarScore = 0;
     this.popstarTotalScore = 0;
     this.popstarTargetScore = getTargetScore(this.popstarLevel);
@@ -456,7 +467,7 @@ class Game2048 {
     const colorCount = getColorCount(this.popstarLevel);
     this.popstarScore = 0;
     this.popstarTargetScore = getTargetScore(this.popstarLevel);
-    this.popstarBoard = createBoard(colorCount);
+    this.popstarBoard = this.createFullPopstarBoard(colorCount);
     this.popstarIsGameOver = false;
     this.popstarIsLevelClear = false;
     this.popstarHighlighted = new Set();
@@ -466,7 +477,7 @@ class Game2048 {
     const colorCount = getColorCount(this.popstarLevel);
     this.popstarScore = 0;
     this.popstarTargetScore = getTargetScore(this.popstarLevel);
-    this.popstarBoard = createBoard(colorCount);
+    this.popstarBoard = this.createFullPopstarBoard(colorCount);
     this.popstarIsGameOver = false;
     this.popstarIsLevelClear = false;
     this.popstarHighlighted = new Set();
@@ -582,9 +593,9 @@ class Game2048 {
       this.touchStartX = touch.clientX;
       this.touchStartY = touch.clientY;
       
-      this.checkButtonClick(touch.clientX, touch.clientY);
+      const buttonClicked = this.checkButtonClick(touch.clientX, touch.clientY);
       
-      if (this.currentScene === SCENE.GAME_POPSTAR && !this.popstarIsGameOver && !this.popstarIsLevelClear) {
+      if (!buttonClicked && this.currentScene === SCENE.GAME_POPSTAR && !this.popstarIsGameOver && !this.popstarIsLevelClear) {
         this.handlePopstarTouchStart(touch.clientX, touch.clientY);
       }
     });
@@ -810,6 +821,8 @@ class Game2048 {
     if (buttonClicked) {
       this.soundManager.playButtonClick();
     }
+    
+    return buttonClicked;
   }
   
   moveInDirection(direction) {

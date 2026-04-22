@@ -182,6 +182,23 @@ function countRemainingStars(board) {
   return count;
 }
 
+function isBoardFull(board) {
+  if (!board || board.length !== POPSTAR_GRID_SIZE) {
+    return false;
+  }
+  for (let row = 0; row < POPSTAR_GRID_SIZE; row++) {
+    if (!board[row] || board[row].length !== POPSTAR_GRID_SIZE) {
+      return false;
+    }
+    for (let col = 0; col < POPSTAR_GRID_SIZE; col++) {
+      if (board[row][col] === null || board[row][col] === undefined) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 function processElimination(board, positions) {
   let newBoard = eliminate(board, positions);
   newBoard = applyGravity(newBoard);
@@ -205,5 +222,6 @@ module.exports = {
   calculateBonus,
   getTargetScore,
   countRemainingStars,
+  isBoardFull,
   processElimination
 };
