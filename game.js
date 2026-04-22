@@ -689,6 +689,16 @@ class Game2048 {
     }
     
     if (this.currentScene === SCENE.HOME_2048_MODE) {
+      const backBtnSize = this.rpx(88);
+      const backBtnX = this.gameX;
+      const backBtnY = this.homeTitleY - this.rpx(40);
+      
+      if (x >= backBtnX && x <= backBtnX + backBtnSize &&
+          y >= backBtnY && y <= backBtnY + backBtnSize) {
+        this.goBackHome();
+        return;
+      }
+      
       for (const card of this.modeCards) {
         if (x >= card.x && x <= card.x + card.width &&
             y >= card.y && y <= card.y + card.height) {
@@ -1595,8 +1605,35 @@ class Game2048 {
     this.drawGameTypeCards();
   }
   
+  drawBackButton() {
+    const theme = this.isDark ? themes.dark : themes.light;
+    const ctx = this.ctx;
+    
+    const backBtnSize = this.rpx(88);
+    const backBtnX = this.gameX;
+    const backBtnY = this.homeTitleY - this.rpx(40);
+    
+    ctx.shadowColor = this.isDark ? 'rgba(0, 0, 0, 0.25)' : 'rgba(0, 0, 0, 0.06)';
+    ctx.shadowBlur = this.isDark ? this.rpx(10) : this.rpx(6);
+    ctx.shadowOffsetY = this.isDark ? this.rpx(3) : this.rpx(2);
+    
+    ctx.fillStyle = theme.themeBtnBg;
+    this.drawRoundedRect(backBtnX, backBtnY, backBtnSize, backBtnSize, Math.round(backBtnSize / 2));
+    ctx.fill();
+    
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetY = 0;
+    
+    ctx.fillStyle = theme.titleText;
+    ctx.font = `bold ${Math.round(this.rpx(32))}px system-ui`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('←', backBtnX + backBtnSize / 2, backBtnY + backBtnSize / 2);
+  }
+  
   render2048ModeSelect() {
     this.drawBackground();
+    this.drawBackButton();
     this.drawHomeTitle();
     this.drawModeCards();
   }
