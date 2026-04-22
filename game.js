@@ -1611,23 +1611,80 @@ class Game2048 {
     return theme.popstarStars[colorIndex] || theme.popstarStars[0];
   }
   
-  drawStarPath(ctx, cx, cy, outerRadius, innerRadius) {
+  drawRoundedStarPath(ctx, cx, cy, outerRadius, innerRadius, outerCornerRadius, innerCornerRadius) {
     const points = 5;
     const step = Math.PI / points;
     let rotation = -Math.PI / 2;
     
-    ctx.beginPath();
+    const vertices = [];
     for (let i = 0; i < points * 2; i++) {
-      const radius = i % 2 === 0 ? outerRadius : innerRadius;
+      const isOuter = i % 2 === 0;
+      const radius = isOuter ? outerRadius : innerRadius;
       const x = cx + Math.cos(rotation) * radius;
       const y = cy + Math.sin(rotation) * radius;
-      if (i === 0) {
-        ctx.moveTo(x, y);
-      } else {
-        ctx.lineTo(x, y);
-      }
+      vertices.push({ x, y, isOuter });
       rotation += step;
     }
+    
+    ctx.beginPath();
+    
+    for (let i = 0; i < vertices.length; i++) {
+      const prevIndex = (i - 1 + vertices.length) % vertices.length;
+      const currIndex = i;
+      const nextIndex = (i + 1) % vertices.length;
+      
+      const prev = vertices[prevIndex];
+      const curr = vertices[currIndex];
+      const next = vertices[nextIndex];
+      
+      const cornerRadius = curr.isOuter ? outerCornerRadius : innerCornerRadius;
+      
+      if (cornerRadius <= 0) {
+        if (i === 0) {
+          ctx.moveTo(curr.x, curr.y);
+        } else {
+          ctx.lineTo(curr.x, curr.y);
+        }
+        continue;
+      }
+      
+      const dx1 = curr.x - prev.x;
+      const dy1 = curr.y - prev.y;
+      const len1 = Math.sqrt(dx1 * dx1 + dy1 * dy1);
+      
+      const dx2 = curr.x - next.x;
+      const dy2 = curr.y - next.y;
+      const len2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
+      
+      const maxRadius = Math.min(len1, len2) * 0.4;
+      const actualRadius = Math.min(cornerRadius, maxRadius);
+      
+      if (actualRadius <= 0) {
+        if (i === 0) {
+          ctx.moveTo(curr.x, curr.y);
+        } else {
+          ctx.lineTo(curr.x, curr.y);
+        }
+        continue;
+      }
+      
+      const t1 = actualRadius / len1;
+      const startX = curr.x - dx1 * t1;
+      const startY = curr.y - dy1 * t1;
+      
+      const t2 = actualRadius / len2;
+      const endX = curr.x - dx2 * t2;
+      const endY = curr.y - dy2 * t2;
+      
+      if (i === 0) {
+        ctx.moveTo(startX, startY);
+      } else {
+        ctx.lineTo(startX, startY);
+      }
+      
+      ctx.quadraticCurveTo(curr.x, curr.y, endX, endY);
+    }
+    
     ctx.closePath();
   }
   
@@ -1653,11 +1710,13 @@ class Game2048 {
           }
         }
 
-        const scale = isHighlighted ? 1.08 : 1;
+        const scale = isHighlighted ? 1.12 : 1;
         const starCenterX = pos.x + cellSize / 2;
         const starCenterY = pos.y + cellSize / 2;
-        const starOuterRadius = cellSize * 0.38 * scale;
-        const starInnerRadius = cellSize * 0.18 * scale;
+        const starOuterRadius = cellSize * 0.44 * scale;
+        const starInnerRadius = cellSize * 0.22 * scale;
+        const outerCornerRadius = cellSize * 0.06 * scale;
+        const innerCornerRadius = cellSize * 0.03 * scale;
 
         ctx.shadowColor = this.isDark ? 'rgba(0, 0, 0, 0.35)' : 'rgba(0, 0, 0, 0.08)';
         ctx.shadowBlur = this.isDark ? this.rpx(8) : this.rpx(6);
@@ -1665,7 +1724,7 @@ class Game2048 {
 
         if (isHighlighted && style.glow) {
           ctx.shadowColor = style.glow;
-          ctx.shadowBlur = this.isDark ? this.rpx(24) : this.rpx(18);
+          ctx.shadowBlur = this.isDark ? this.rpx(28) : this.rpx(22);
         }
 
         const gradient = ctx.createLinearGradient(pos.x, pos.y, pos.x, pos.y + cellSize);
@@ -1679,7 +1738,7 @@ class Game2048 {
         ctx.shadowOffsetY = 0;
 
         if (isHighlighted) {
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.18)';
           this.drawRoundedRect(pos.x, pos.y, cellSize, cellSize, radius);
           ctx.fill();
         }
@@ -1699,22 +1758,23 @@ class Game2048 {
 
         ctx.save();
         
-        ctx.shadowColor = style.starShadow || (this.isDark ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.25)');
-        ctx.shadowBlur = this.rpx(isHighlighted ? 6 : 4);
-        ctx.shadowOffsetY = this.rpx(isHighlighted ? 3 : 2);
+        const starShadowColor = style.starShadow || (this.isDark ? 'rgba(0, 0, 0, 0.6)' : 'rgba(0, 0, 0, 0.35)');
+        ctx.shadowColor = starShadowColor;
+        ctx.shadowBlur = this.rpx(isHighlighted ? 10 : 7);
+        ctx.shadowOffsetY = this.rpx(isHighlighted ? 5 : 3);
         
-        this.drawStarPath(ctx, starCenterX, starCenterY, starOuterRadius, starInnerRadius);
+        this.drawRoundedStarPath(ctx, starCenterX, starCenterY, starOuterRadius, starInnerRadius, outerCornerRadius, innerCornerRadius);
         
         const starGradient = ctx.createRadialGradient(
-          starCenterX - starOuterRadius * 0.3,
-          starCenterY - starOuterRadius * 0.3,
+          starCenterX - starOuterRadius * 0.4,
+          starCenterY - starOuterRadius * 0.4,
           0,
           starCenterX,
           starCenterY,
           starOuterRadius
         );
         starGradient.addColorStop(0, style.starBg || style.bg);
-        starGradient.addColorStop(0.6, style.starBgEnd || style.bgEnd);
+        starGradient.addColorStop(0.5, style.starBgEnd || style.bgEnd);
         starGradient.addColorStop(1, style.bgEnd);
         
         ctx.fillStyle = starGradient;
@@ -1723,22 +1783,44 @@ class Game2048 {
         ctx.shadowBlur = 0;
         ctx.shadowOffsetY = 0;
         
-        const highlightRadius = starInnerRadius * 0.7;
+        const highlightRadius = starInnerRadius * 1.2;
         const highlightGradient = ctx.createRadialGradient(
-          starCenterX - starOuterRadius * 0.2,
-          starCenterY - starOuterRadius * 0.2,
+          starCenterX - starOuterRadius * 0.3,
+          starCenterY - starOuterRadius * 0.3,
           0,
           starCenterX,
           starCenterY,
           highlightRadius
         );
-        highlightGradient.addColorStop(0, style.starHighlight || 'rgba(255, 255, 255, 0.6)');
+        const highlightOpacity = this.isDark ? 0.5 : 0.7;
+        highlightGradient.addColorStop(0, `rgba(255, 255, 255, ${highlightOpacity})`);
+        highlightGradient.addColorStop(0.4, `rgba(255, 255, 255, ${highlightOpacity * 0.6})`);
         highlightGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
         
         ctx.fillStyle = highlightGradient;
         ctx.beginPath();
         ctx.arc(starCenterX, starCenterY, highlightRadius, 0, Math.PI * 2);
         ctx.fill();
+        
+        ctx.globalCompositeOperation = 'source-atop';
+        const edgeHighlightGradient = ctx.createRadialGradient(
+          starCenterX,
+          starCenterY - starOuterRadius * 0.2,
+          starOuterRadius * 0.1,
+          starCenterX,
+          starCenterY,
+          starOuterRadius
+        );
+        edgeHighlightGradient.addColorStop(0, 'rgba(255, 255, 255, 0.3)');
+        edgeHighlightGradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.1)');
+        edgeHighlightGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        
+        ctx.fillStyle = edgeHighlightGradient;
+        ctx.beginPath();
+        ctx.arc(starCenterX, starCenterY, starOuterRadius, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.globalCompositeOperation = 'source-over';
         
         ctx.restore();
       }
