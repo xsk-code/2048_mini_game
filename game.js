@@ -75,12 +75,12 @@ const themes = {
       8192: { bg: '#882028', text: '#FFFFFF', glow: '#882028' }
     },
     popstarStars: [
-      { bg: '#FF8BA0', bgEnd: '#E86080', starBg: '#FFA8B8', starBgEnd: '#E86080', starHighlight: 'rgba(255, 255, 255, 0.5)', starShadow: 'rgba(200, 50, 80, 0.4)', text: '#FFFFFF', glow: '#FF8BA0', highlight: 'rgba(255, 255, 255, 0.25)' },
-      { bg: '#7EB8E6', bgEnd: '#5090C8', starBg: '#9DD0FF', starBgEnd: '#5090C8', starHighlight: 'rgba(255, 255, 255, 0.5)', starShadow: 'rgba(40, 90, 140, 0.4)', text: '#FFFFFF', glow: '#7EB8E6', highlight: 'rgba(255, 255, 255, 0.25)' },
-      { bg: '#88D8B0', bgEnd: '#50B888', starBg: '#A8E8C8', starBgEnd: '#50B888', starHighlight: 'rgba(255, 255, 255, 0.5)', starShadow: 'rgba(40, 120, 80, 0.4)', text: '#FFFFFF', glow: '#88D8B0', highlight: 'rgba(255, 255, 255, 0.25)' },
-      { bg: '#FFD466', bgEnd: '#E8B030', starBg: '#FFE090', starBgEnd: '#E8B030', starHighlight: 'rgba(255, 255, 255, 0.6)', starShadow: 'rgba(160, 120, 20, 0.4)', text: '#6B5D4F', glow: '#FFD466', highlight: 'rgba(255, 255, 255, 0.30)' },
-      { bg: '#B8A0D8', bgEnd: '#9070B0', starBg: '#D0B8F0', starBgEnd: '#9070B0', starHighlight: 'rgba(255, 255, 255, 0.5)', starShadow: 'rgba(100, 60, 130, 0.4)', text: '#FFFFFF', glow: '#B8A0D8', highlight: 'rgba(255, 255, 255, 0.25)' },
-      { bg: '#FFB070', bgEnd: '#E88040', starBg: '#FFC898', starBgEnd: '#E88040', starHighlight: 'rgba(255, 255, 255, 0.5)', starShadow: 'rgba(180, 80, 30, 0.4)', text: '#FFFFFF', glow: '#FFB070', highlight: 'rgba(255, 255, 255, 0.25)' }
+      { bg: '#FF8BA0', bgEnd: '#E86080', starBg: '#FFA8B8', starBgEnd: '#E86080', starHighlight: 'rgba(255, 255, 255, 0.5)', starShadow: 'rgba(200, 50, 80, 0.55)', text: '#FFFFFF', glow: '#FF8BA0', highlight: 'rgba(255, 255, 255, 0.25)' },
+      { bg: '#7EB8E6', bgEnd: '#5090C8', starBg: '#9DD0FF', starBgEnd: '#5090C8', starHighlight: 'rgba(255, 255, 255, 0.5)', starShadow: 'rgba(40, 90, 140, 0.55)', text: '#FFFFFF', glow: '#7EB8E6', highlight: 'rgba(255, 255, 255, 0.25)' },
+      { bg: '#88D8B0', bgEnd: '#50B888', starBg: '#A8E8C8', starBgEnd: '#50B888', starHighlight: 'rgba(255, 255, 255, 0.5)', starShadow: 'rgba(40, 120, 80, 0.55)', text: '#FFFFFF', glow: '#88D8B0', highlight: 'rgba(255, 255, 255, 0.25)' },
+      { bg: '#FFD466', bgEnd: '#E8B030', starBg: '#FFE090', starBgEnd: '#E8B030', starHighlight: 'rgba(255, 255, 255, 0.6)', starShadow: 'rgba(160, 120, 20, 0.55)', text: '#6B5D4F', glow: '#FFD466', highlight: 'rgba(255, 255, 255, 0.30)' },
+      { bg: '#B8A0D8', bgEnd: '#9070B0', starBg: '#D0B8F0', starBgEnd: '#9070B0', starHighlight: 'rgba(255, 255, 255, 0.5)', starShadow: 'rgba(100, 60, 130, 0.55)', text: '#FFFFFF', glow: '#B8A0D8', highlight: 'rgba(255, 255, 255, 0.25)' },
+      { bg: '#FFB070', bgEnd: '#E88040', starBg: '#FFC898', starBgEnd: '#E88040', starHighlight: 'rgba(255, 255, 255, 0.5)', starShadow: 'rgba(180, 80, 30, 0.55)', text: '#FFFFFF', glow: '#FFB070', highlight: 'rgba(255, 255, 255, 0.25)' }
     ]
   },
   dark: {
@@ -118,12 +118,12 @@ const themes = {
       8192: { bg: '#902020', text: '#FFFFFF', glow: '#902020' }
     },
     popstarStars: [
-      { bg: '#E87090', bgEnd: '#C05070', starBg: '#FF90B0', starBgEnd: '#C05070', starHighlight: 'rgba(255, 255, 255, 0.4)', starShadow: 'rgba(150, 30, 60, 0.5)', text: '#FFFFFF', glow: '#E87090', highlight: 'rgba(255, 255, 255, 0.15)' },
-      { bg: '#5090C8', bgEnd: '#3070A8', starBg: '#70B0E8', starBgEnd: '#3070A8', starHighlight: 'rgba(255, 255, 255, 0.4)', starShadow: 'rgba(20, 60, 100, 0.5)', text: '#FFFFFF', glow: '#5090C8', highlight: 'rgba(255, 255, 255, 0.15)' },
-      { bg: '#50B888', bgEnd: '#308868', starBg: '#70D8A8', starBgEnd: '#308868', starHighlight: 'rgba(255, 255, 255, 0.4)', starShadow: 'rgba(20, 90, 60, 0.5)', text: '#FFFFFF', glow: '#50B888', highlight: 'rgba(255, 255, 255, 0.15)' },
-      { bg: '#E8B840', bgEnd: '#C89820', starBg: '#FFD060', starBgEnd: '#C89820', starHighlight: 'rgba(255, 255, 255, 0.5)', starShadow: 'rgba(130, 100, 10, 0.5)', text: '#0D1B2A', glow: '#E8B840', highlight: 'rgba(255, 255, 255, 0.20)' },
-      { bg: '#9078B8', bgEnd: '#705898', starBg: '#B098D8', starBgEnd: '#705898', starHighlight: 'rgba(255, 255, 255, 0.4)', starShadow: 'rgba(70, 40, 100, 0.5)', text: '#FFFFFF', glow: '#9078B8', highlight: 'rgba(255, 255, 255, 0.15)' },
-      { bg: '#E89050', bgEnd: '#C87030', starBg: '#FFB070', starBgEnd: '#C87030', starHighlight: 'rgba(255, 255, 255, 0.4)', starShadow: 'rgba(150, 70, 20, 0.5)', text: '#FFFFFF', glow: '#E89050', highlight: 'rgba(255, 255, 255, 0.15)' }
+      { bg: '#E87090', bgEnd: '#C05070', starBg: '#FF90B0', starBgEnd: '#C05070', starHighlight: 'rgba(255, 255, 255, 0.4)', starShadow: 'rgba(150, 30, 60, 0.65)', text: '#FFFFFF', glow: '#E87090', highlight: 'rgba(255, 255, 255, 0.15)' },
+      { bg: '#5090C8', bgEnd: '#3070A8', starBg: '#70B0E8', starBgEnd: '#3070A8', starHighlight: 'rgba(255, 255, 255, 0.4)', starShadow: 'rgba(20, 60, 100, 0.65)', text: '#FFFFFF', glow: '#5090C8', highlight: 'rgba(255, 255, 255, 0.15)' },
+      { bg: '#50B888', bgEnd: '#308868', starBg: '#70D8A8', starBgEnd: '#308868', starHighlight: 'rgba(255, 255, 255, 0.4)', starShadow: 'rgba(20, 90, 60, 0.65)', text: '#FFFFFF', glow: '#50B888', highlight: 'rgba(255, 255, 255, 0.15)' },
+      { bg: '#E8B840', bgEnd: '#C89820', starBg: '#FFD060', starBgEnd: '#C89820', starHighlight: 'rgba(255, 255, 255, 0.5)', starShadow: 'rgba(130, 100, 10, 0.65)', text: '#0D1B2A', glow: '#E8B840', highlight: 'rgba(255, 255, 255, 0.20)' },
+      { bg: '#9078B8', bgEnd: '#705898', starBg: '#B098D8', starBgEnd: '#705898', starHighlight: 'rgba(255, 255, 255, 0.4)', starShadow: 'rgba(70, 40, 100, 0.65)', text: '#FFFFFF', glow: '#9078B8', highlight: 'rgba(255, 255, 255, 0.15)' },
+      { bg: '#E89050', bgEnd: '#C87030', starBg: '#FFB070', starBgEnd: '#C87030', starHighlight: 'rgba(255, 255, 255, 0.4)', starShadow: 'rgba(150, 70, 20, 0.65)', text: '#FFFFFF', glow: '#E89050', highlight: 'rgba(255, 255, 255, 0.15)' }
     ]
   }
 };
@@ -1718,9 +1718,10 @@ class Game2048 {
         const outerCornerRadius = cellSize * 0.06 * scale;
         const innerCornerRadius = cellSize * 0.03 * scale;
 
-        ctx.shadowColor = this.isDark ? 'rgba(0, 0, 0, 0.35)' : 'rgba(0, 0, 0, 0.08)';
-        ctx.shadowBlur = this.isDark ? this.rpx(8) : this.rpx(6);
-        ctx.shadowOffsetY = this.isDark ? this.rpx(2) : this.rpx(1);
+        ctx.shadowColor = this.isDark ? 'rgba(0, 0, 0, 0.4)' : 'rgba(0, 0, 0, 0.12)';
+        ctx.shadowBlur = this.isDark ? this.rpx(10) : this.rpx(8);
+        ctx.shadowOffsetX = this.isDark ? this.rpx(2) : this.rpx(1);
+        ctx.shadowOffsetY = this.isDark ? this.rpx(3) : this.rpx(2);
 
         if (isHighlighted && style.glow) {
           ctx.shadowColor = style.glow;
@@ -1735,6 +1736,7 @@ class Game2048 {
         ctx.fill();
 
         ctx.shadowBlur = 0;
+        ctx.shadowOffsetX = 0;
         ctx.shadowOffsetY = 0;
 
         if (isHighlighted) {
@@ -1759,12 +1761,6 @@ class Game2048 {
         ctx.save();
         
         const starDropShadowColor = style.starShadow || (this.isDark ? 'rgba(0, 0, 0, 0.8)' : 'rgba(0, 0, 0, 0.55)');
-        ctx.shadowColor = starDropShadowColor;
-        ctx.shadowBlur = this.rpx(isHighlighted ? 16 : 11);
-        ctx.shadowOffsetX = this.rpx(isHighlighted ? 4 : 3);
-        ctx.shadowOffsetY = this.rpx(isHighlighted ? 8 : 5);
-        
-        this.drawRoundedStarPath(ctx, starCenterX, starCenterY, starOuterRadius, starInnerRadius, outerCornerRadius, innerCornerRadius);
         
         const starBaseGradient = ctx.createLinearGradient(
           starCenterX - starOuterRadius * 0.6,
@@ -1776,6 +1772,35 @@ class Game2048 {
         starBaseGradient.addColorStop(0.5, style.starBgEnd || style.bgEnd);
         starBaseGradient.addColorStop(1, style.bgEnd);
         
+        if (isHighlighted && style.glow) {
+          ctx.shadowColor = style.glow;
+          ctx.shadowBlur = this.rpx(32);
+          ctx.shadowOffsetX = this.rpx(5);
+          ctx.shadowOffsetY = this.rpx(14);
+        } else {
+          ctx.shadowColor = this.isDark ? 'rgba(0, 0, 0, 0.5)' : 'rgba(0, 0, 0, 0.18)';
+          ctx.shadowBlur = this.rpx(22);
+          ctx.shadowOffsetX = this.rpx(4);
+          ctx.shadowOffsetY = this.rpx(10);
+        }
+        
+        this.drawRoundedStarPath(ctx, starCenterX, starCenterY, starOuterRadius, starInnerRadius, outerCornerRadius, innerCornerRadius);
+        ctx.fillStyle = starBaseGradient;
+        ctx.fill();
+        
+        if (isHighlighted && style.glow) {
+          ctx.shadowColor = style.glow;
+          ctx.shadowBlur = this.rpx(14);
+          ctx.shadowOffsetX = this.rpx(3);
+          ctx.shadowOffsetY = this.rpx(6);
+        } else {
+          ctx.shadowColor = starDropShadowColor;
+          ctx.shadowBlur = this.rpx(10);
+          ctx.shadowOffsetX = this.rpx(2);
+          ctx.shadowOffsetY = this.rpx(4);
+        }
+        
+        this.drawRoundedStarPath(ctx, starCenterX, starCenterY, starOuterRadius, starInnerRadius, outerCornerRadius, innerCornerRadius);
         ctx.fillStyle = starBaseGradient;
         ctx.fill();
         
