@@ -75,12 +75,12 @@ const themes = {
       8192: { bg: '#882028', text: '#FFFFFF', glow: '#882028' }
     },
     popstarStars: [
-      { bg: '#FF8BA0', text: '#FFFFFF', glow: '#FF8BA0' },
-      { bg: '#7EB8E6', text: '#FFFFFF', glow: '#7EB8E6' },
-      { bg: '#88D8B0', text: '#FFFFFF', glow: '#88D8B0' },
-      { bg: '#FFD466', text: '#6B5D4F', glow: '#FFD466' },
-      { bg: '#B8A0D8', text: '#FFFFFF', glow: '#B8A0D8' },
-      { bg: '#FFB070', text: '#FFFFFF', glow: '#FFB070' }
+      { bg: '#FF8BA0', bgEnd: '#E86080', text: '#FFFFFF', glow: '#FF8BA0', highlight: 'rgba(255, 255, 255, 0.25)' },
+      { bg: '#7EB8E6', bgEnd: '#5090C8', text: '#FFFFFF', glow: '#7EB8E6', highlight: 'rgba(255, 255, 255, 0.25)' },
+      { bg: '#88D8B0', bgEnd: '#50B888', text: '#FFFFFF', glow: '#88D8B0', highlight: 'rgba(255, 255, 255, 0.25)' },
+      { bg: '#FFD466', bgEnd: '#E8B030', text: '#6B5D4F', glow: '#FFD466', highlight: 'rgba(255, 255, 255, 0.30)' },
+      { bg: '#B8A0D8', bgEnd: '#9070B0', text: '#FFFFFF', glow: '#B8A0D8', highlight: 'rgba(255, 255, 255, 0.25)' },
+      { bg: '#FFB070', bgEnd: '#E88040', text: '#FFFFFF', glow: '#FFB070', highlight: 'rgba(255, 255, 255, 0.25)' }
     ]
   },
   dark: {
@@ -118,12 +118,12 @@ const themes = {
       8192: { bg: '#902020', text: '#FFFFFF', glow: '#902020' }
     },
     popstarStars: [
-      { bg: '#E87090', text: '#FFFFFF', glow: '#E87090' },
-      { bg: '#5090C8', text: '#FFFFFF', glow: '#5090C8' },
-      { bg: '#50B888', text: '#FFFFFF', glow: '#50B888' },
-      { bg: '#E8B840', text: '#0D1B2A', glow: '#E8B840' },
-      { bg: '#9078B8', text: '#FFFFFF', glow: '#9078B8' },
-      { bg: '#E89050', text: '#FFFFFF', glow: '#E89050' }
+      { bg: '#E87090', bgEnd: '#C05070', text: '#FFFFFF', glow: '#E87090', highlight: 'rgba(255, 255, 255, 0.15)' },
+      { bg: '#5090C8', bgEnd: '#3070A8', text: '#FFFFFF', glow: '#5090C8', highlight: 'rgba(255, 255, 255, 0.15)' },
+      { bg: '#50B888', bgEnd: '#308868', text: '#FFFFFF', glow: '#50B888', highlight: 'rgba(255, 255, 255, 0.15)' },
+      { bg: '#E8B840', bgEnd: '#C89820', text: '#0D1B2A', glow: '#E8B840', highlight: 'rgba(255, 255, 255, 0.20)' },
+      { bg: '#9078B8', bgEnd: '#705898', text: '#FFFFFF', glow: '#9078B8', highlight: 'rgba(255, 255, 255, 0.15)' },
+      { bg: '#E89050', bgEnd: '#C87030', text: '#FFFFFF', glow: '#E89050', highlight: 'rgba(255, 255, 255, 0.15)' }
     ]
   }
 };
@@ -211,6 +211,7 @@ class Game2048 {
     this.boardX = this.gameX + (this.gameWidth - this.boardSize) / 2;
     
     this.cellGap = this.boardSize * 0.025;
+    this.popstarCellGap = this.boardSize * 0.006;
     this.cellSize = (this.boardSize - this.cellGap * (this.gridSize + 1)) / this.gridSize;
     
     this.titleFontSize = this.rpx(88);
@@ -242,6 +243,7 @@ class Game2048 {
     
     this.boardRadius = this.rpx(20);
     this.cellRadius = this.rpx(12);
+    this.popstarCellRadius = this.rpx(5);
     
     this.cardWidth = this.rpx(600);
     this.cardHeight = this.rpx(180);
@@ -508,7 +510,7 @@ class Game2048 {
   }
   
   get popstarCellSize() {
-    return (this.boardSize - this.cellGap * (this.popstarGridSize + 1)) / this.popstarGridSize;
+    return (this.boardSize - this.popstarCellGap * (this.popstarGridSize + 1)) / this.popstarGridSize;
   }
   
   saveCurrentState() {
@@ -656,8 +658,8 @@ class Game2048 {
   }
   
   handlePopstarTouchStart(x, y) {
-    const cellX = Math.floor((x - this.boardX - this.cellGap) / (this.popstarCellSize + this.cellGap));
-    const cellY = Math.floor((y - this.boardY - this.cellGap) / (this.popstarCellSize + this.cellGap));
+    const cellX = Math.floor((x - this.boardX - this.popstarCellGap) / (this.popstarCellSize + this.popstarCellGap));
+    const cellY = Math.floor((y - this.boardY - this.popstarCellGap) / (this.popstarCellSize + this.popstarCellGap));
     
     if (cellX >= 0 && cellX < this.popstarGridSize && cellY >= 0 && cellY < this.popstarGridSize) {
       if (this.popstarBoard[cellY][cellX] !== null) {
@@ -674,8 +676,8 @@ class Game2048 {
   
   handlePopstarTouchEnd(x, y) {
     if (this.popstarHighlighted.size > 0) {
-      const cellX = Math.floor((x - this.boardX - this.cellGap) / (this.popstarCellSize + this.cellGap));
-      const cellY = Math.floor((y - this.boardY - this.cellGap) / (this.popstarCellSize + this.cellGap));
+      const cellX = Math.floor((x - this.boardX - this.popstarCellGap) / (this.popstarCellSize + this.popstarCellGap));
+      const cellY = Math.floor((y - this.boardY - this.popstarCellGap) / (this.popstarCellSize + this.popstarCellGap));
       
       let isInHighlighted = false;
       for (const pos of this.popstarHighlighted) {
@@ -1593,24 +1595,14 @@ class Game2048 {
 
     ctx.shadowBlur = 0;
     ctx.shadowOffsetY = 0;
-
-    const cellSize = this.popstarCellSize;
-    for (let y = 0; y < this.popstarGridSize; y++) {
-      for (let x = 0; x < this.popstarGridSize; x++) {
-        const posX = this.boardX + this.cellGap + x * (cellSize + this.cellGap);
-        const posY = this.boardY + this.cellGap + y * (cellSize + this.cellGap);
-        ctx.fillStyle = theme.cellBg;
-        this.drawRoundedRect(posX, posY, cellSize, cellSize, this.cellRadius * 0.6);
-        ctx.fill();
-      }
-    }
   }
   
   getPopstarStarPosition(row, col) {
     const cellSize = this.popstarCellSize;
+    const gap = this.popstarCellGap;
     return {
-      x: Math.round(this.boardX + this.cellGap + col * (cellSize + this.cellGap)),
-      y: Math.round(this.boardY + this.cellGap + row * (cellSize + this.cellGap))
+      x: Math.round(this.boardX + gap + col * (cellSize + gap)),
+      y: Math.round(this.boardY + gap + row * (cellSize + gap))
     };
   }
   
@@ -1622,6 +1614,8 @@ class Game2048 {
   drawPopstarStars() {
     const ctx = this.ctx;
     const cellSize = this.popstarCellSize;
+    const gap = this.popstarCellGap;
+    const radius = this.popstarCellRadius;
 
     for (let row = 0; row < this.popstarGridSize; row++) {
       for (let col = 0; col < this.popstarGridSize; col++) {
@@ -1645,21 +1639,43 @@ class Game2048 {
 
         if (isHighlighted && style.glow) {
           ctx.shadowColor = style.glow;
-          ctx.shadowBlur = this.isDark ? this.rpx(20) : this.rpx(16);
+          ctx.shadowBlur = this.isDark ? this.rpx(24) : this.rpx(18);
         }
 
-        ctx.fillStyle = style.bg;
-        this.drawRoundedRect(pos.x, pos.y, cellSize, cellSize, this.cellRadius * 0.6);
+        const gradient = ctx.createLinearGradient(pos.x, pos.y, pos.x, pos.y + cellSize);
+        gradient.addColorStop(0, style.bg);
+        gradient.addColorStop(1, style.bgEnd);
+        ctx.fillStyle = gradient;
+        this.drawRoundedRect(pos.x, pos.y, cellSize, cellSize, radius);
         ctx.fill();
 
         ctx.shadowBlur = 0;
         ctx.shadowOffsetY = 0;
-        
+
+        if (isHighlighted) {
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+          this.drawRoundedRect(pos.x, pos.y, cellSize, cellSize, radius);
+          ctx.fill();
+        }
+
+        ctx.fillStyle = style.highlight;
+        ctx.beginPath();
+        const hlHeight = cellSize * 0.45;
+        ctx.moveTo(pos.x + radius, pos.y);
+        ctx.lineTo(pos.x + cellSize - radius, pos.y);
+        ctx.quadraticCurveTo(pos.x + cellSize, pos.y, pos.x + cellSize, pos.y + radius);
+        ctx.lineTo(pos.x + cellSize, pos.y + hlHeight);
+        ctx.lineTo(pos.x, pos.y + hlHeight);
+        ctx.lineTo(pos.x, pos.y + radius);
+        ctx.quadraticCurveTo(pos.x, pos.y, pos.x + radius, pos.y);
+        ctx.closePath();
+        ctx.fill();
+
         ctx.fillStyle = style.text;
-        ctx.font = `bold ${Math.round(cellSize * 0.35)}px system-ui`;
+        ctx.font = `bold ${Math.round(cellSize * 0.5)}px system-ui`;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('★', pos.x + cellSize / 2, pos.y + cellSize / 2);
+        ctx.fillText('★', pos.x + cellSize / 2, pos.y + cellSize / 2 + cellSize * 0.03);
       }
     }
   }
