@@ -1,4 +1,4 @@
-const { getModeById, getDefaultMode, getAllModes } = require('./mode-config');
+const { getModeById, getDefaultMode, getAllModes, getGameTypeById } = require('./mode-config');
 
 function getStorageAdapter() {
   if (typeof wx !== 'undefined' && wx.getStorageSync) {
@@ -94,6 +94,97 @@ function loadAllModesInfo() {
   }));
 }
 
+function loadPopstarBestScore() {
+  const gameType = getGameTypeById('popstar');
+  try {
+    const saved = storage.get(gameType.bestScoreStorageKey);
+    if (saved !== null && saved !== undefined) {
+      return parseInt(saved, 10) || 0;
+    }
+  } catch (e) {
+    console.error('Failed to load popstar best score:', e);
+  }
+  return 0;
+}
+
+function savePopstarBestScore(score) {
+  const gameType = getGameTypeById('popstar');
+  try {
+    storage.set(gameType.bestScoreStorageKey, score.toString());
+  } catch (e) {
+    console.error('Failed to save popstar best score:', e);
+  }
+}
+
+function loadPopstarSaveState() {
+  const gameType = getGameTypeById('popstar');
+  try {
+    const saved = storage.get(gameType.saveStateStorageKey);
+    if (saved) {
+      const state = typeof saved === 'string' ? JSON.parse(saved) : saved;
+      if (state && state.board && state.score !== undefined) {
+        return state;
+      }
+    }
+  } catch (e) {
+    console.error('Failed to load popstar save state:', e);
+  }
+  return null;
+}
+
+function savePopstarSaveState(state) {
+  const gameType = getGameTypeById('popstar');
+  try {
+    const saveData = {
+      board: state.board,
+      score: state.score,
+      totalScore: state.totalScore || 0,
+      level: state.level || 1,
+      targetScore: state.targetScore || 1000,
+      isGameOver: state.isGameOver || false,
+      isLevelClear: state.isLevelClear || false
+    };
+    storage.set(gameType.saveStateStorageKey, JSON.stringify(saveData));
+  } catch (e) {
+    console.error('Failed to save popstar state:', e);
+  }
+}
+
+function clearPopstarSaveState() {
+  const gameType = getGameTypeById('popstar');
+  try {
+    storage.remove(gameType.saveStateStorageKey);
+  } catch (e) {
+    console.error('Failed to clear popstar save state:', e);
+  }
+}
+
+function hasPopstarSaveState() {
+  return loadPopstarSaveState() !== null;
+}
+
+function loadAllGameTypesInfo() {
+  const game2048Info = {
+    id: '2048',
+    label: '2048',
+    subtitle: '4×4 | 5×5 | 6×6',
+    icon: '★',
+    bestScore: Math.max(...getAllModes().map(m => loadBestScore(m.id))),
+    hasSave: getAllModes().some(m => hasSaveState(m.id))
+  };
+  
+  const popstarInfo = {
+    id: 'popstar',
+    label: '消灭星星',
+    subtitle: 'POPSTAR',
+    icon: '✦',
+    bestScore: loadPopstarBestScore(),
+    hasSave: hasPopstarSaveState()
+  };
+  
+  return [game2048Info, popstarInfo];
+}
+
 module.exports = {
   loadBestScore,
   saveBestScore,
@@ -101,5 +192,12 @@ module.exports = {
   saveSaveState,
   clearSaveState,
   hasSaveState,
-  loadAllModesInfo
+  loadAllModesInfo,
+  loadPopstarBestScore,
+  savePopstarBestScore,
+  loadPopstarSaveState,
+  savePopstarSaveState,
+  clearPopstarSaveState,
+  hasPopstarSaveState,
+  loadAllGameTypesInfo
 };
