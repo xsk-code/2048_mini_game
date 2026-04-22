@@ -35,7 +35,8 @@ const SCENE = {
   HOME: 'home',
   HOME_2048_MODE: 'home_2048_mode',
   GAME_2048: 'game_2048',
-  GAME_POPSTAR: 'game_popstar'
+  GAME_POPSTAR: 'game_popstar',
+  POPSTAR_CONFIRM: 'popstar_confirm'
 };
 
 const themes = {
@@ -396,7 +397,11 @@ class Game2048 {
     if (gameTypeId === '2048') {
       this.init2048ModeSelect();
     } else if (gameTypeId === 'popstar') {
-      this.enterPopstarGame();
+      if (hasPopstarSaveState()) {
+        this.initPopstarConfirm();
+      } else {
+        this.enterPopstarGame();
+      }
     }
   }
   
@@ -420,6 +425,15 @@ class Game2048 {
     this.currentScene = SCENE.GAME_2048;
   }
   
+  initPopstarConfirm() {
+    this.currentScene = SCENE.POPSTAR_CONFIRM;
+    const savedState = loadPopstarSaveState();
+    if (savedState) {
+      this.popstarLevel = savedState.level || 1;
+      this.popstarScore = savedState.score || 0;
+    }
+  }
+  
   enterPopstarGame() {
     const savedState = loadPopstarSaveState();
     
@@ -436,6 +450,12 @@ class Game2048 {
     }
     
     this.popstarBestScore = loadPopstarBestScore();
+    this.currentScene = SCENE.GAME_POPSTAR;
+  }
+  
+  startNewPopstarGame() {
+    clearPopstarSaveState();
+    this.initPopstarGame();
     this.currentScene = SCENE.GAME_POPSTAR;
   }
   
@@ -716,7 +736,24 @@ class Game2048 {
   checkButtonClick(x, y) {
     let buttonClicked = false;
     
-    if (this.currentScene === SCENE.HOME) {
+    if (this.currentScene === SCENE.POPSTAR_CONFIRM) {
+      if (this.popstarConfirmContinueBtn &&
+          x >= this.popstarConfirmContinueBtn.x && x <= this.popstarConfirmContinueBtn.x + this.popstarConfirmContinueBtn.width &&
+          y >= this.popstarConfirmContinueBtn.y && y <= this.popstarConfirmContinueBtn.y + this.popstarConfirmContinueBtn.height) {
+        this.enterPopstarGame();
+        buttonClicked = true;
+      } else if (this.popstarConfirmNewBtn &&
+          x >= this.popstarConfirmNewBtn.x && x <= this.popstarConfirmNewBtn.x + this.popstarConfirmNewBtn.width &&
+          y >= this.popstarConfirmNewBtn.y && y <= this.popstarConfirmNewBtn.y + this.popstarConfirmNewBtn.height) {
+        this.startNewPopstarGame();
+        buttonClicked = true;
+      } else if (this.popstarConfirmBackBtn &&
+          x >= this.popstarConfirmBackBtn.x && x <= this.popstarConfirmBackBtn.x + this.popstarConfirmBackBtn.width &&
+          y >= this.popstarConfirmBackBtn.y && y <= this.popstarConfirmBackBtn.y + this.popstarConfirmBackBtn.height) {
+        this.goBackHome();
+        buttonClicked = true;
+      }
+    } else if (this.currentScene === SCENE.HOME) {
       for (const card of this.gameTypeCards) {
         if (x >= card.x && x <= card.x + card.width &&
             y >= card.y && y <= card.y + card.height) {
@@ -1745,6 +1782,92 @@ class Game2048 {
     this.drawPopstarOverlay();
   }
   
+  drawPopstarConfirmDialog() {
+    const theme = this.isDark ? themes.dark : themes.light;
+    const ctx = this.ctx;
+    
+    const dialogWidth = this.rpx(600);
+    const dialogHeight = this.rpx(400);
+    const dialogX = this.gameX + (this.gameWidth - dialogWidth) / 2;
+    const dialogY = this.screenHeight / 2 - dialogHeight / 2;
+    
+    ctx.shadowColor = this.isDark ? 'rgba(0, 0, 0, 0.4)' : 'rgba(0, 0, 0, 0.1)';
+    ctx.shadowBlur = this.isDark ? this.rpx(20) : this.rpx(12);
+    ctx.shadowOffsetY = this.isDark ? this.rpx(6) : this.rpx(3);
+    
+    ctx.fillStyle = theme.overlayBg;
+    this.drawRoundedRect(dialogX, dialogY, dialogWidth, dialogHeight, this.rpx(32));
+    ctx.fill();
+    
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetY = 0;
+    
+    const centerX = dialogX + dialogWidth / 2;
+    const centerY = dialogY + dialogHeight / 2;
+    
+    const gradient = ctx.createLinearGradient(centerX - this.rpx(100), centerY - this.rpx(80), centerX + this.rpx(100), centerY - this.rpx(40));
+    gradient.addColorStop(0, theme.titleGradient[0]);
+    gradient.addColorStop(1, theme.titleGradient[1]);
+    
+    ctx.fillStyle = gradient;
+    ctx.font = `bold ${Math.round(this.rpx(36))}px system-ui`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('继续游戏？', centerX, centerY - this.rpx(80));
+    
+    ctx.fillStyle = theme.subtitleText;
+    ctx.font = `${Math.round(this.rpx(20))}px system-ui`;
+    ctx.fillText(`当前进度：第 ${this.popstarLevel} 关，得分 ${this.popstarScore}`, centerX, centerY - this.rpx(30));
+    
+    const btnWidth = this.rpx(240);
+    const btnHeight = this.rpx(72);
+    const btnGap = this.rpx(40);
+    const btnY = centerY + this.rpx(40);
+    const continueBtnX = centerX - btnWidth - btnGap / 2;
+    const newBtnX = centerX + btnGap / 2;
+    const backBtnY = btnY + btnHeight + this.rpx(24);
+    const backBtnWidth = this.rpx(120);
+    const backBtnX = centerX - backBtnWidth / 2;
+    
+    this.popstarConfirmContinueBtn = { x: continueBtnX, y: btnY, width: btnWidth, height: btnHeight };
+    this.popstarConfirmNewBtn = { x: newBtnX, y: btnY, width: btnWidth, height: btnHeight };
+    this.popstarConfirmBackBtn = { x: backBtnX, y: backBtnY, width: backBtnWidth, height: btnHeight };
+    
+    ctx.shadowColor = this.isDark ? 'rgba(0, 0, 0, 0.35)' : 'rgba(126, 184, 230, 0.25)';
+    ctx.shadowBlur = this.isDark ? this.rpx(12) : this.rpx(8);
+    ctx.shadowOffsetY = this.isDark ? this.rpx(4) : this.rpx(2);
+    
+    ctx.fillStyle = theme.buttonBg;
+    this.drawRoundedRect(continueBtnX, btnY, btnWidth, btnHeight, this.rpx(36));
+    ctx.fill();
+    
+    this.drawRoundedRect(newBtnX, btnY, btnWidth, btnHeight, this.rpx(36));
+    ctx.fill();
+    
+    ctx.fillStyle = theme.themeBtnBg;
+    this.drawRoundedRect(backBtnX, backBtnY, backBtnWidth, btnHeight, this.rpx(36));
+    ctx.fill();
+    
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetY = 0;
+    
+    ctx.fillStyle = theme.buttonText;
+    ctx.font = `bold ${Math.round(this.rpx(22))}px system-ui`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('继续进度', continueBtnX + btnWidth / 2, btnY + btnHeight / 2);
+    ctx.fillText('从第一关开始', newBtnX + btnWidth / 2, btnY + btnHeight / 2);
+    
+    ctx.fillStyle = theme.titleText;
+    ctx.fillText('返回', backBtnX + backBtnWidth / 2, backBtnY + btnHeight / 2);
+  }
+  
+  renderPopstarConfirm() {
+    this.drawBackground();
+    this.drawHomeTitle();
+    this.drawPopstarConfirmDialog();
+  }
+  
   render() {
     if (this.currentScene === SCENE.HOME) {
       this.renderHome();
@@ -1754,6 +1877,8 @@ class Game2048 {
       this.render2048Game();
     } else if (this.currentScene === SCENE.GAME_POPSTAR) {
       this.renderPopstar();
+    } else if (this.currentScene === SCENE.POPSTAR_CONFIRM) {
+      this.renderPopstarConfirm();
     }
   }
   
