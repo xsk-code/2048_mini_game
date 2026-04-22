@@ -17,6 +17,7 @@ const {
 } = require('./storage');
 const { 
   POPSTAR_GRID_SIZE,
+  getColorCount,
   createBoard,
   findConnected,
   canEliminate,
@@ -27,6 +28,7 @@ const {
   countRemainingStars,
   processElimination
 } = require('./popstar-logic');
+const { getSoundManager } = require('./sound-manager');
 
 const SCENE = {
   HOME: 'home',
@@ -75,7 +77,8 @@ const themes = {
       { bg: '#7EB8E6', text: '#FFFFFF', glow: '#7EB8E6' },
       { bg: '#88D8B0', text: '#FFFFFF', glow: '#88D8B0' },
       { bg: '#FFD466', text: '#6B5D4F', glow: '#FFD466' },
-      { bg: '#B8A0D8', text: '#FFFFFF', glow: '#B8A0D8' }
+      { bg: '#B8A0D8', text: '#FFFFFF', glow: '#B8A0D8' },
+      { bg: '#FFB070', text: '#FFFFFF', glow: '#FFB070' }
     ]
   },
   dark: {
@@ -117,7 +120,8 @@ const themes = {
       { bg: '#5090C8', text: '#FFFFFF', glow: '#5090C8' },
       { bg: '#50B888', text: '#FFFFFF', glow: '#50B888' },
       { bg: '#E8B840', text: '#0D1B2A', glow: '#E8B840' },
-      { bg: '#9078B8', text: '#FFFFFF', glow: '#9078B8' }
+      { bg: '#9078B8', text: '#FFFFFF', glow: '#9078B8' },
+      { bg: '#E89050', text: '#FFFFFF', glow: '#E89050' }
     ]
   }
 };
@@ -169,6 +173,8 @@ class Game2048 {
     
     this.modeCards = [];
     this.gameTypeCards = [];
+    
+    this.soundManager = getSoundManager();
     
     this.calculateDimensions();
     this.initHome();
@@ -432,10 +438,11 @@ class Game2048 {
   }
   
   initPopstarGame() {
-    this.popstarBoard = createBoard();
+    this.popstarLevel = 1;
+    const colorCount = getColorCount(this.popstarLevel);
+    this.popstarBoard = createBoard(colorCount);
     this.popstarScore = 0;
     this.popstarTotalScore = 0;
-    this.popstarLevel = 1;
     this.popstarTargetScore = getTargetScore(this.popstarLevel);
     this.popstarIsGameOver = false;
     this.popstarIsLevelClear = false;
@@ -445,9 +452,10 @@ class Game2048 {
   
   nextPopstarLevel() {
     this.popstarLevel++;
+    const colorCount = getColorCount(this.popstarLevel);
     this.popstarScore = 0;
     this.popstarTargetScore = getTargetScore(this.popstarLevel);
-    this.popstarBoard = createBoard();
+    this.popstarBoard = createBoard(colorCount);
     this.popstarIsGameOver = false;
     this.popstarIsLevelClear = false;
     this.popstarHighlighted = new Set();
@@ -616,6 +624,7 @@ class Game2048 {
           this.popstarHighlighted = connected;
         } else {
           this.popstarHighlighted = new Set();
+          this.soundManager.playTap();
         }
       }
     }
@@ -645,6 +654,8 @@ class Game2048 {
     const count = positions.size;
     const scoreGain = calculateScore(count);
     
+    this.soundManager.playElimination(count);
+    
     this.popstarScore += scoreGain;
     this.popstarTotalScore += scoreGain;
     
@@ -654,6 +665,8 @@ class Game2048 {
     }
     
     this.popstarBoard = processElimination(this.popstarBoard, positions);
+    
+    this.soundManager.playFall();
     
     this.savePopstarCurrentState();
     
@@ -668,8 +681,10 @@ class Game2048 {
       
       if (this.popstarTotalScore >= this.popstarTargetScore) {
         this.popstarIsLevelClear = true;
+        this.soundManager.playLevelClear();
       } else {
         this.popstarIsGameOver = true;
+        this.soundManager.playPopstarGameOver();
       }
       
       this.savePopstarCurrentState();
@@ -677,18 +692,18 @@ class Game2048 {
   }
   
   checkButtonClick(x, y) {
+    let buttonClicked = false;
+    
     if (this.currentScene === SCENE.HOME) {
       for (const card of this.gameTypeCards) {
         if (x >= card.x && x <= card.x + card.width &&
             y >= card.y && y <= card.y + card.height) {
           this.enterGameType(card.id);
-          return;
+          buttonClicked = true;
+          break;
         }
       }
-      return;
-    }
-    
-    if (this.currentScene === SCENE.HOME_2048_MODE) {
+    } else if (this.currentScene === SCENE.HOME_2048_MODE) {
       const backBtnSize = this.rpx(88);
       const backBtnX = this.gameX;
       const backBtnY = this.homeTitleY - this.rpx(40);
@@ -696,69 +711,83 @@ class Game2048 {
       if (x >= backBtnX && x <= backBtnX + backBtnSize &&
           y >= backBtnY && y <= backBtnY + backBtnSize) {
         this.goBackHome();
-        return;
+        buttonClicked = true;
+      } else {
+        for (const card of this.modeCards) {
+          if (x >= card.x && x <= card.x + card.width &&
+              y >= card.y && y <= card.y + card.height) {
+            this.enterMode(card.id);
+            buttonClicked = true;
+            break;
+          }
+        }
+      }
+    } else {
+      const totalActionWidth = this.newGameBtnWidth + this.actionBtnsGap + this.homeBtnSize + this.actionBtnsGap + this.themeBtnSize;
+      const actionStartX = this.gameX + (this.gameWidth - totalActionWidth) / 2;
+      
+      const newGameBtnX = actionStartX;
+      const newGameBtnY = this.actionY;
+      if (x >= newGameBtnX && x <= newGameBtnX + this.newGameBtnWidth && 
+          y >= newGameBtnY && y <= newGameBtnY + this.newGameBtnHeight) {
+        if (this.currentScene === SCENE.GAME_2048) {
+          this.initGame();
+        } else if (this.currentScene === SCENE.GAME_POPSTAR) {
+          if (this.popstarIsLevelClear) {
+            this.nextPopstarLevel();
+          } else {
+            this.initPopstarGame();
+          }
+        }
+        buttonClicked = true;
       }
       
-      for (const card of this.modeCards) {
-        if (x >= card.x && x <= card.x + card.width &&
-            y >= card.y && y <= card.y + card.height) {
-          this.enterMode(card.id);
-          return;
+      if (!buttonClicked) {
+        const homeBtnX = actionStartX + this.newGameBtnWidth + this.actionBtnsGap;
+        const homeBtnY = this.actionY;
+        if (x >= homeBtnX && x <= homeBtnX + this.homeBtnSize && 
+            y >= homeBtnY && y <= homeBtnY + this.homeBtnSize) {
+          this.goBackHome();
+          buttonClicked = true;
         }
       }
-      return;
-    }
-    
-    const totalActionWidth = this.newGameBtnWidth + this.actionBtnsGap + this.homeBtnSize + this.actionBtnsGap + this.themeBtnSize;
-    const actionStartX = this.gameX + (this.gameWidth - totalActionWidth) / 2;
-    
-    const newGameBtnX = actionStartX;
-    const newGameBtnY = this.actionY;
-    if (x >= newGameBtnX && x <= newGameBtnX + this.newGameBtnWidth && 
-        y >= newGameBtnY && y <= newGameBtnY + this.newGameBtnHeight) {
-      if (this.currentScene === SCENE.GAME_2048) {
-        this.initGame();
-      } else if (this.currentScene === SCENE.GAME_POPSTAR) {
-        if (this.popstarIsLevelClear) {
-          this.nextPopstarLevel();
-        } else {
-          this.initPopstarGame();
+      
+      if (!buttonClicked) {
+        const themeBtnX = actionStartX + this.newGameBtnWidth + this.actionBtnsGap + this.homeBtnSize + this.actionBtnsGap;
+        const themeBtnY = this.actionY;
+        if (x >= themeBtnX && x <= themeBtnX + this.themeBtnSize && 
+            y >= themeBtnY && y <= themeBtnY + this.themeBtnSize) {
+          this.isDark = !this.isDark;
+          this.saveTheme();
+          buttonClicked = true;
         }
       }
-      return;
-    }
-    
-    const homeBtnX = actionStartX + this.newGameBtnWidth + this.actionBtnsGap;
-    const homeBtnY = this.actionY;
-    if (x >= homeBtnX && x <= homeBtnX + this.homeBtnSize && 
-        y >= homeBtnY && y <= homeBtnY + this.homeBtnSize) {
-      this.goBackHome();
-      return;
-    }
-    
-    const themeBtnX = actionStartX + this.newGameBtnWidth + this.actionBtnsGap + this.homeBtnSize + this.actionBtnsGap;
-    const themeBtnY = this.actionY;
-    if (x >= themeBtnX && x <= themeBtnX + this.themeBtnSize && 
-        y >= themeBtnY && y <= themeBtnY + this.themeBtnSize) {
-      this.isDark = !this.isDark;
-      this.saveTheme();
-      return;
-    }
-    
-    if (this.currentScene === SCENE.GAME_2048 && this.isGameOver &&
-        x >= this.boardX && x <= this.boardX + this.boardSize &&
-        y >= this.boardY && y <= this.boardY + this.boardSize) {
-      this.initGame();
-    }
-    
-    if (this.currentScene === SCENE.GAME_POPSTAR && (this.popstarIsGameOver || this.popstarIsLevelClear) &&
-        x >= this.boardX && x <= this.boardX + this.boardSize &&
-        y >= this.boardY && y <= this.boardY + this.boardSize) {
-      if (this.popstarIsLevelClear) {
-        this.nextPopstarLevel();
-      } else {
-        this.initPopstarGame();
+      
+      if (!buttonClicked) {
+        if (this.currentScene === SCENE.GAME_2048 && this.isGameOver &&
+            x >= this.boardX && x <= this.boardX + this.boardSize &&
+            y >= this.boardY && y <= this.boardY + this.boardSize) {
+          this.initGame();
+          buttonClicked = true;
+        }
       }
+      
+      if (!buttonClicked) {
+        if (this.currentScene === SCENE.GAME_POPSTAR && (this.popstarIsGameOver || this.popstarIsLevelClear) &&
+            x >= this.boardX && x <= this.boardX + this.boardSize &&
+            y >= this.boardY && y <= this.boardY + this.boardSize) {
+          if (this.popstarIsLevelClear) {
+            this.nextPopstarLevel();
+          } else {
+            this.initPopstarGame();
+          }
+          buttonClicked = true;
+        }
+      }
+    }
+    
+    if (buttonClicked) {
+      this.soundManager.playButtonClick();
     }
   }
   
@@ -913,12 +942,17 @@ class Game2048 {
       this.tiles = this.getTiles();
       this.updateBestScore();
       
+      if (scoreGain > 0) {
+        this.soundManager.play2048Merge();
+      }
+      
       setTimeout(() => {
         this.addRandomTile();
         this.saveCurrentState();
 
         if (!this.canMove()) {
           this.isGameOver = true;
+          this.soundManager.play2048GameOver();
         }
         this.isMoving = false;
       }, 160);

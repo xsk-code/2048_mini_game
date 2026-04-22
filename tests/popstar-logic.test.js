@@ -4,6 +4,7 @@ const assert = require('node:assert/strict');
 const { 
   POPSTAR_GRID_SIZE,
   STAR_COLORS,
+  getColorCount,
   createBoard,
   cloneBoard,
   findConnected,
@@ -23,8 +24,20 @@ test('POPSTAR_GRID_SIZE should be 10', () => {
   assert.equal(POPSTAR_GRID_SIZE, 10);
 });
 
-test('STAR_COLORS should have 5 colors', () => {
-  assert.equal(STAR_COLORS.length, 5);
+test('STAR_COLORS should have 6 colors', () => {
+  assert.equal(STAR_COLORS.length, 6);
+});
+
+test('getColorCount should return 5 for level 1-25', () => {
+  assert.equal(getColorCount(1), 5);
+  assert.equal(getColorCount(10), 5);
+  assert.equal(getColorCount(25), 5);
+});
+
+test('getColorCount should return 6 for level 26+', () => {
+  assert.equal(getColorCount(26), 6);
+  assert.equal(getColorCount(50), 6);
+  assert.equal(getColorCount(100), 6);
 });
 
 test('createBoard should create 10x10 board', () => {
@@ -33,12 +46,22 @@ test('createBoard should create 10x10 board', () => {
   assert.equal(board[0].length, 10);
 });
 
-test('createBoard should be filled with color indices 0-4', () => {
-  const board = createBoard();
+test('createBoard with 5 colors should be filled with color indices 0-4', () => {
+  const board = createBoard(5);
   for (let row = 0; row < 10; row++) {
     for (let col = 0; col < 10; col++) {
       const cell = board[row][col];
       assert.ok(cell >= 0 && cell <= 4, `Cell (${row},${col}) should be 0-4, got ${cell}`);
+    }
+  }
+});
+
+test('createBoard with 6 colors should be filled with color indices 0-5', () => {
+  const board = createBoard(6);
+  for (let row = 0; row < 10; row++) {
+    for (let col = 0; col < 10; col++) {
+      const cell = board[row][col];
+      assert.ok(cell >= 0 && cell <= 5, `Cell (${row},${col}) should be 0-5, got ${cell}`);
     }
   }
 });
@@ -283,11 +306,27 @@ test('calculateBonus should return 0 for remaining >= 10', () => {
   assert.equal(calculateBonus(20), 0);
 });
 
-test('getTargetScore should return correct target for level', () => {
+test('getTargetScore should return correct target for level 1-10', () => {
   assert.equal(getTargetScore(1), 1000);
-  assert.equal(getTargetScore(2), 1500);
-  assert.equal(getTargetScore(3), 2000);
-  assert.equal(getTargetScore(10), 5500);
+  assert.equal(getTargetScore(5), 2200);
+  assert.equal(getTargetScore(10), 3700);
+});
+
+test('getTargetScore should return correct target for level 11-20', () => {
+  assert.equal(getTargetScore(11), 4200);
+  assert.equal(getTargetScore(15), 6200);
+  assert.equal(getTargetScore(20), 8700);
+});
+
+test('getTargetScore should return correct target for level 21-50', () => {
+  assert.equal(getTargetScore(21), 9500);
+  assert.equal(getTargetScore(30), 16700);
+  assert.equal(getTargetScore(50), 32700);
+});
+
+test('getTargetScore should return correct target for level 51+', () => {
+  assert.equal(getTargetScore(51), 33900);
+  assert.equal(getTargetScore(100), 92700);
 });
 
 test('countRemainingStars should count non-null cells', () => {
