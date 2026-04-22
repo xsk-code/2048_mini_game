@@ -1,12 +1,19 @@
 const POPSTAR_GRID_SIZE = 10;
-const STAR_COLORS = ['red', 'blue', 'green', 'yellow', 'purple'];
+const STAR_COLORS = ['red', 'blue', 'green', 'yellow', 'purple', 'orange'];
 
-function createBoard() {
+function getColorCount(level) {
+  if (level >= 26) {
+    return 6;
+  }
+  return 5;
+}
+
+function createBoard(colorCount = 5) {
   const board = [];
   for (let row = 0; row < POPSTAR_GRID_SIZE; row++) {
     const rowArr = [];
     for (let col = 0; col < POPSTAR_GRID_SIZE; col++) {
-      rowArr.push(Math.floor(Math.random() * 5));
+      rowArr.push(Math.floor(Math.random() * colorCount));
     }
     board.push(rowArr);
   }
@@ -152,7 +159,15 @@ function calculateBonus(remaining) {
 }
 
 function getTargetScore(level) {
-  return 1000 + (level - 1) * 500;
+  if (level <= 10) {
+    return 1000 + (level - 1) * 300;
+  } else if (level <= 20) {
+    return 3700 + (level - 10) * 500;
+  } else if (level <= 50) {
+    return 8700 + (level - 20) * 800;
+  } else {
+    return 32700 + (level - 50) * 1200;
+  }
 }
 
 function countRemainingStars(board) {
@@ -177,6 +192,7 @@ function processElimination(board, positions) {
 module.exports = {
   POPSTAR_GRID_SIZE,
   STAR_COLORS,
+  getColorCount,
   createBoard,
   cloneBoard,
   findConnected,
