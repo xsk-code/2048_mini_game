@@ -205,9 +205,9 @@ class SoundManager {
 | 消除数量 | 音效策略 |
 |----------|----------|
 | 2 - 4 | 播放 `popstar_eliminate`，音量 0.6 |
-| 5 - 9 | 播放 `popstar_combo`，音量 0.8 |
-| 10 - 19 | 播放 `popstar_combo`，音量 1.0，播放速率 1.1 |
-| 20+ | 播放 `popstar_combo`，音量 1.0，播放速率 1.2，叠加 `popstar_clear` 的尾音 |
+| 5 - 9 | 播放 `popstar_eliminate`，音量 0.6 |
+| 10 - 19 | 播放 `popstar_eliminate`，音量 0.6 |
+| 20+ | 播放 `popstar_eliminate`，音量 0.6 |
 
 ### 4.6 音效开关
 

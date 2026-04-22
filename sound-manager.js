@@ -115,16 +115,7 @@ class SoundManager {
   playElimination(count) {
     if (!this.enabled) return;
 
-    if (count >= 20) {
-      this.play('popstar_combo', { volume: 1.0, playbackRate: 1.2 });
-      setTimeout(() => {
-        this.play('popstar_clear', { volume: 0.7 });
-      }, 100);
-    } else if (count >= 10) {
-      this.play('popstar_combo', { volume: 1.0, playbackRate: 1.1 });
-    } else if (count >= 5) {
-      this.play('popstar_combo', { volume: 0.8 });
-    } else if (count >= 2) {
+    if (count >= 2) {
       this.play('popstar_eliminate', { volume: 0.6 });
     }
   }
