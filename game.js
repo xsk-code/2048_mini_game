@@ -1,17 +1,38 @@
 const { canBoardMove, createEmptyBoard } = require('./game-logic');
-const { getModeById, getDefaultMode, getAllModes } = require('./mode-config');
+const { getModeById, getDefaultMode, getAllModes, getModesByGameType } = require('./mode-config');
 const { 
   loadBestScore, 
   saveBestScore, 
   loadSaveState, 
   saveSaveState, 
   hasSaveState,
-  loadAllModesInfo
+  loadAllModesInfo,
+  loadPopstarBestScore,
+  savePopstarBestScore,
+  loadPopstarSaveState,
+  savePopstarSaveState,
+  clearPopstarSaveState,
+  hasPopstarSaveState,
+  loadAllGameTypesInfo
 } = require('./storage');
+const { 
+  POPSTAR_GRID_SIZE,
+  createBoard,
+  findConnected,
+  canEliminate,
+  hasValidMoves,
+  calculateScore,
+  calculateBonus,
+  getTargetScore,
+  countRemainingStars,
+  processElimination
+} = require('./popstar-logic');
 
 const SCENE = {
   HOME: 'home',
-  GAME: 'game'
+  HOME_2048_MODE: 'home_2048_mode',
+  GAME_2048: 'game_2048',
+  GAME_POPSTAR: 'game_popstar'
 };
 
 const themes = {
@@ -48,7 +69,14 @@ const themes = {
       2048: { bg: '#883898', text: '#FFFFFF', glow: '#883898' },
       4096: { bg: '#A83058', text: '#FFFFFF', glow: '#A83058' },
       8192: { bg: '#882028', text: '#FFFFFF', glow: '#882028' }
-    }
+    },
+    popstarStars: [
+      { bg: '#FF8BA0', text: '#FFFFFF', glow: '#FF8BA0' },
+      { bg: '#7EB8E6', text: '#FFFFFF', glow: '#7EB8E6' },
+      { bg: '#88D8B0', text: '#FFFFFF', glow: '#88D8B0' },
+      { bg: '#FFD466', text: '#6B5D4F', glow: '#FFD466' },
+      { bg: '#B8A0D8', text: '#FFFFFF', glow: '#B8A0D8' }
+    ]
   },
   dark: {
     background: '#0D1B2A',
@@ -83,7 +111,14 @@ const themes = {
       2048: { bg: '#883090', text: '#FFFFFF', glow: '#883090' },
       4096: { bg: '#A83058', text: '#FFFFFF', glow: '#A83058' },
       8192: { bg: '#902020', text: '#FFFFFF', glow: '#902020' }
-    }
+    },
+    popstarStars: [
+      { bg: '#E87090', text: '#FFFFFF', glow: '#E87090' },
+      { bg: '#5090C8', text: '#FFFFFF', glow: '#5090C8' },
+      { bg: '#50B888', text: '#FFFFFF', glow: '#50B888' },
+      { bg: '#E8B840', text: '#0D1B2A', glow: '#E8B840' },
+      { bg: '#9078B8', text: '#FFFFFF', glow: '#9078B8' }
+    ]
   }
 };
 
@@ -115,6 +150,16 @@ class Game2048 {
     this.tiles = [];
     this.tileId = 0;
     
+    this.popstarBoard = [];
+    this.popstarScore = 0;
+    this.popstarTotalScore = 0;
+    this.popstarLevel = 1;
+    this.popstarTargetScore = 1000;
+    this.popstarBestScore = 0;
+    this.popstarIsGameOver = false;
+    this.popstarIsLevelClear = false;
+    this.popstarHighlighted = new Set();
+    
     this.touchStartX = 0;
     this.touchStartY = 0;
     this.isMoving = false;
@@ -123,6 +168,7 @@ class Game2048 {
     this.isAnimating = false;
     
     this.modeCards = [];
+    this.gameTypeCards = [];
     
     this.calculateDimensions();
     this.initHome();
@@ -234,7 +280,34 @@ class Game2048 {
   }
   
   recalculateHomeLayout() {
-    const modes = getAllModes();
+    const gameTypesInfo = loadAllGameTypesInfo();
+    const totalCardsHeight = gameTypesInfo.length * this.cardHeight + (gameTypesInfo.length - 1) * this.cardGap;
+    const headerHeight = this.titleFontSize + this.subtitleFontSize + this.rpx(16) + this.rpx(60);
+    
+    const totalContentHeight = headerHeight + totalCardsHeight;
+    const startY = (this.screenHeight - totalContentHeight) / 2;
+    
+    let currentY = startY;
+    
+    this.homeTitleY = currentY + this.titleFontSize / 2;
+    this.homeSubtitleY = this.homeTitleY + this.titleFontSize / 2 + this.rpx(16) + this.subtitleFontSize / 2;
+    
+    currentY += headerHeight;
+    
+    this.gameTypeCards = gameTypesInfo.map((gameType, index) => {
+      const card = {
+        ...gameType,
+        x: this.gameX + (this.gameWidth - this.cardWidth) / 2,
+        y: currentY + index * (this.cardHeight + this.cardGap),
+        width: this.cardWidth,
+        height: this.cardHeight
+      };
+      return card;
+    });
+  }
+  
+  recalculate2048ModeLayout() {
+    const modes = getModesByGameType('2048');
     const totalCardsHeight = modes.length * this.cardHeight + (modes.length - 1) * this.cardGap;
     const headerHeight = this.titleFontSize + this.subtitleFontSize + this.rpx(16) + this.rpx(60);
     
@@ -306,6 +379,19 @@ class Game2048 {
     this.recalculateHomeLayout();
   }
   
+  init2048ModeSelect() {
+    this.currentScene = SCENE.HOME_2048_MODE;
+    this.recalculate2048ModeLayout();
+  }
+  
+  enterGameType(gameTypeId) {
+    if (gameTypeId === '2048') {
+      this.init2048ModeSelect();
+    } else if (gameTypeId === 'popstar') {
+      this.enterPopstarGame();
+    }
+  }
+  
   enterMode(modeId) {
     this.currentMode = getModeById(modeId);
     this.calculateDimensions();
@@ -323,7 +409,56 @@ class Game2048 {
     }
     
     this.bestScore = loadBestScore(modeId);
-    this.currentScene = SCENE.GAME;
+    this.currentScene = SCENE.GAME_2048;
+  }
+  
+  enterPopstarGame() {
+    const savedState = loadPopstarSaveState();
+    
+    if (savedState) {
+      this.popstarBoard = savedState.board;
+      this.popstarScore = savedState.score;
+      this.popstarTotalScore = savedState.totalScore || 0;
+      this.popstarLevel = savedState.level || 1;
+      this.popstarTargetScore = savedState.targetScore || 1000;
+      this.popstarIsGameOver = savedState.isGameOver || false;
+      this.popstarIsLevelClear = savedState.isLevelClear || false;
+    } else {
+      this.initPopstarGame();
+    }
+    
+    this.popstarBestScore = loadPopstarBestScore();
+    this.currentScene = SCENE.GAME_POPSTAR;
+  }
+  
+  initPopstarGame() {
+    this.popstarBoard = createBoard();
+    this.popstarScore = 0;
+    this.popstarTotalScore = 0;
+    this.popstarLevel = 1;
+    this.popstarTargetScore = getTargetScore(this.popstarLevel);
+    this.popstarIsGameOver = false;
+    this.popstarIsLevelClear = false;
+    this.popstarHighlighted = new Set();
+    this.popstarBestScore = loadPopstarBestScore();
+  }
+  
+  nextPopstarLevel() {
+    this.popstarLevel++;
+    this.popstarScore = 0;
+    this.popstarTargetScore = getTargetScore(this.popstarLevel);
+    this.popstarBoard = createBoard();
+    this.popstarIsGameOver = false;
+    this.popstarIsLevelClear = false;
+    this.popstarHighlighted = new Set();
+  }
+  
+  get popstarGridSize() {
+    return POPSTAR_GRID_SIZE;
+  }
+  
+  get popstarCellSize() {
+    return (this.boardSize - this.cellGap * (this.popstarGridSize + 1)) / this.popstarGridSize;
   }
   
   saveCurrentState() {
@@ -337,9 +472,29 @@ class Game2048 {
     }
   }
   
+  savePopstarCurrentState() {
+    if (this.popstarBoard.length > 0) {
+      savePopstarSaveState({
+        board: this.popstarBoard,
+        score: this.popstarScore,
+        totalScore: this.popstarTotalScore,
+        level: this.popstarLevel,
+        targetScore: this.popstarTargetScore,
+        isGameOver: this.popstarIsGameOver,
+        isLevelClear: this.popstarIsLevelClear
+      });
+    }
+  }
+  
   goBackHome() {
-    this.saveCurrentState();
-    this.currentMode = null;
+    if (this.currentScene === SCENE.GAME_2048) {
+      this.saveCurrentState();
+      this.currentMode = null;
+    } else if (this.currentScene === SCENE.GAME_POPSTAR) {
+      this.savePopstarCurrentState();
+    } else if (this.currentScene === SCENE.HOME_2048_MODE) {
+      // Do nothing, just go back to home
+    }
     this.initHome();
   }
   
@@ -409,29 +564,39 @@ class Game2048 {
       this.touchStartY = touch.clientY;
       
       this.checkButtonClick(touch.clientX, touch.clientY);
+      
+      if (this.currentScene === SCENE.GAME_POPSTAR && !this.popstarIsGameOver && !this.popstarIsLevelClear) {
+        this.handlePopstarTouchStart(touch.clientX, touch.clientY);
+      }
     });
     
     wx.onTouchEnd((e) => {
-      if (this.currentScene !== SCENE.GAME) return;
-      if (this.isGameOver) return;
-      if (!this.touchStartX || !this.touchStartY) return;
-      
-      const touch = e.changedTouches[0];
-      const touchEndX = touch.clientX;
-      const touchEndY = touch.clientY;
-      
-      const dx = touchEndX - this.touchStartX;
-      const dy = touchEndY - this.touchStartY;
-      
-      const minSwipe = 30;
-      
-      if (Math.abs(dx) > Math.abs(dy)) {
-        if (Math.abs(dx) > minSwipe) {
-          this.moveInDirection(dx > 0 ? 'right' : 'left');
+      if (this.currentScene === SCENE.GAME_2048) {
+        if (this.isGameOver) return;
+        if (!this.touchStartX || !this.touchStartY) return;
+        
+        const touch = e.changedTouches[0];
+        const touchEndX = touch.clientX;
+        const touchEndY = touch.clientY;
+        
+        const dx = touchEndX - this.touchStartX;
+        const dy = touchEndY - this.touchStartY;
+        
+        const minSwipe = 30;
+        
+        if (Math.abs(dx) > Math.abs(dy)) {
+          if (Math.abs(dx) > minSwipe) {
+            this.moveInDirection(dx > 0 ? 'right' : 'left');
+          }
+        } else {
+          if (Math.abs(dy) > minSwipe) {
+            this.moveInDirection(dy > 0 ? 'down' : 'up');
+          }
         }
-      } else {
-        if (Math.abs(dy) > minSwipe) {
-          this.moveInDirection(dy > 0 ? 'down' : 'up');
+      } else if (this.currentScene === SCENE.GAME_POPSTAR) {
+        if (!this.popstarIsGameOver && !this.popstarIsLevelClear) {
+          const touch = e.changedTouches[0];
+          this.handlePopstarTouchEnd(touch.clientX, touch.clientY);
         }
       }
       
@@ -440,8 +605,90 @@ class Game2048 {
     });
   }
   
+  handlePopstarTouchStart(x, y) {
+    const cellX = Math.floor((x - this.boardX - this.cellGap) / (this.popstarCellSize + this.cellGap));
+    const cellY = Math.floor((y - this.boardY - this.cellGap) / (this.popstarCellSize + this.cellGap));
+    
+    if (cellX >= 0 && cellX < this.popstarGridSize && cellY >= 0 && cellY < this.popstarGridSize) {
+      if (this.popstarBoard[cellY][cellX] !== null) {
+        const connected = findConnected(this.popstarBoard, cellY, cellX);
+        if (connected.size >= 2) {
+          this.popstarHighlighted = connected;
+        } else {
+          this.popstarHighlighted = new Set();
+        }
+      }
+    }
+  }
+  
+  handlePopstarTouchEnd(x, y) {
+    if (this.popstarHighlighted.size > 0) {
+      const cellX = Math.floor((x - this.boardX - this.cellGap) / (this.popstarCellSize + this.cellGap));
+      const cellY = Math.floor((y - this.boardY - this.cellGap) / (this.popstarCellSize + this.cellGap));
+      
+      let isInHighlighted = false;
+      for (const pos of this.popstarHighlighted) {
+        if (pos.row === cellY && pos.col === cellX) {
+          isInHighlighted = true;
+          break;
+        }
+      }
+      
+      if (isInHighlighted) {
+        this.eliminatePopstarStars(this.popstarHighlighted);
+      }
+    }
+    this.popstarHighlighted = new Set();
+  }
+  
+  eliminatePopstarStars(positions) {
+    const count = positions.size;
+    const scoreGain = calculateScore(count);
+    
+    this.popstarScore += scoreGain;
+    this.popstarTotalScore += scoreGain;
+    
+    if (this.popstarScore > this.popstarBestScore) {
+      this.popstarBestScore = this.popstarScore;
+      savePopstarBestScore(this.popstarBestScore);
+    }
+    
+    this.popstarBoard = processElimination(this.popstarBoard, positions);
+    
+    this.savePopstarCurrentState();
+    
+    if (!hasValidMoves(this.popstarBoard)) {
+      const remaining = countRemainingStars(this.popstarBoard);
+      const bonus = calculateBonus(remaining);
+      
+      if (bonus > 0) {
+        this.popstarScore += bonus;
+        this.popstarTotalScore += bonus;
+      }
+      
+      if (this.popstarTotalScore >= this.popstarTargetScore) {
+        this.popstarIsLevelClear = true;
+      } else {
+        this.popstarIsGameOver = true;
+      }
+      
+      this.savePopstarCurrentState();
+    }
+  }
+  
   checkButtonClick(x, y) {
     if (this.currentScene === SCENE.HOME) {
+      for (const card of this.gameTypeCards) {
+        if (x >= card.x && x <= card.x + card.width &&
+            y >= card.y && y <= card.y + card.height) {
+          this.enterGameType(card.id);
+          return;
+        }
+      }
+      return;
+    }
+    
+    if (this.currentScene === SCENE.HOME_2048_MODE) {
       for (const card of this.modeCards) {
         if (x >= card.x && x <= card.x + card.width &&
             y >= card.y && y <= card.y + card.height) {
@@ -459,7 +706,15 @@ class Game2048 {
     const newGameBtnY = this.actionY;
     if (x >= newGameBtnX && x <= newGameBtnX + this.newGameBtnWidth && 
         y >= newGameBtnY && y <= newGameBtnY + this.newGameBtnHeight) {
-      this.initGame();
+      if (this.currentScene === SCENE.GAME_2048) {
+        this.initGame();
+      } else if (this.currentScene === SCENE.GAME_POPSTAR) {
+        if (this.popstarIsLevelClear) {
+          this.nextPopstarLevel();
+        } else {
+          this.initPopstarGame();
+        }
+      }
       return;
     }
     
@@ -480,10 +735,20 @@ class Game2048 {
       return;
     }
     
-    if (this.isGameOver &&
+    if (this.currentScene === SCENE.GAME_2048 && this.isGameOver &&
         x >= this.boardX && x <= this.boardX + this.boardSize &&
         y >= this.boardY && y <= this.boardY + this.boardSize) {
       this.initGame();
+    }
+    
+    if (this.currentScene === SCENE.GAME_POPSTAR && (this.popstarIsGameOver || this.popstarIsLevelClear) &&
+        x >= this.boardX && x <= this.boardX + this.boardSize &&
+        y >= this.boardY && y <= this.boardY + this.boardSize) {
+      if (this.popstarIsLevelClear) {
+        this.nextPopstarLevel();
+      } else {
+        this.initPopstarGame();
+      }
     }
   }
   
@@ -743,12 +1008,104 @@ class Game2048 {
     ctx.font = `bold ${Math.round(this.titleFontSize * 1.1)}px system-ui`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText('2048', titleX, this.homeTitleY);
+    
+    if (this.currentScene === SCENE.HOME) {
+      ctx.fillText('MINI GAMES', titleX, this.homeTitleY);
+    } else {
+      ctx.fillText('2048', titleX, this.homeTitleY);
+    }
     
     ctx.fillStyle = theme.subtitleText;
     ctx.font = `${Math.round(this.subtitleFontSize)}px system-ui`;
     ctx.letterSpacing = `${this.rpx(4)}px`;
-    ctx.fillText('CHOOSE YOUR MODE', titleX, this.homeSubtitleY);
+    
+    if (this.currentScene === SCENE.HOME) {
+      ctx.fillText('CHOOSE YOUR GAME', titleX, this.homeSubtitleY);
+    } else {
+      ctx.fillText('CHOOSE YOUR MODE', titleX, this.homeSubtitleY);
+    }
+  }
+  
+  drawGameTypeCards() {
+    const theme = this.isDark ? themes.dark : themes.light;
+    const ctx = this.ctx;
+    const gameTypesInfo = loadAllGameTypesInfo();
+    
+    for (const card of this.gameTypeCards) {
+      const gameTypeInfo = gameTypesInfo.find(g => g.id === card.id) || card;
+      const hasSave = gameTypeInfo.hasSave;
+      const bestScore = gameTypeInfo.bestScore;
+      
+      ctx.shadowColor = this.isDark ? 'rgba(0, 0, 0, 0.35)' : 'rgba(126, 184, 230, 0.15)';
+      ctx.shadowBlur = this.isDark ? this.rpx(16) : this.rpx(12);
+      ctx.shadowOffsetY = this.isDark ? this.rpx(6) : this.rpx(4);
+      
+      const cardGradient = ctx.createLinearGradient(card.x, card.y, card.x + card.width, card.y + card.height);
+      cardGradient.addColorStop(0, theme.cardGradient[0]);
+      cardGradient.addColorStop(1, theme.cardGradient[1]);
+      
+      ctx.fillStyle = cardGradient;
+      this.drawRoundedRect(card.x, card.y, card.width, card.height, this.cardRadius);
+      ctx.fill();
+      
+      ctx.shadowBlur = 0;
+      ctx.shadowOffsetY = 0;
+      
+      const stripWidth = this.rpx(8);
+      const stripX = card.x + this.rpx(28);
+      const stripGradient = ctx.createLinearGradient(stripX, card.y + this.rpx(28), stripX, card.y + card.height - this.rpx(28));
+      stripGradient.addColorStop(0, theme.cardAccent[0]);
+      stripGradient.addColorStop(1, theme.cardAccent[1]);
+      
+      ctx.fillStyle = stripGradient;
+      this.drawRoundedRect(stripX, card.y + this.rpx(28), stripWidth, card.height - this.rpx(56), this.rpx(4));
+      ctx.fill();
+      
+      const labelX = card.x + this.rpx(56);
+      const centerY = card.y + card.height / 2;
+      
+      ctx.fillStyle = theme.titleText;
+      ctx.font = `bold ${Math.round(this.rpx(44))}px system-ui`;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(card.label, labelX, centerY - this.rpx(18));
+      
+      ctx.fillStyle = theme.subtitleText;
+      ctx.font = `${Math.round(this.rpx(20))}px system-ui`;
+      ctx.fillText(card.subtitle, labelX, centerY + this.rpx(18));
+      
+      const statsX = card.x + card.width - this.rpx(32);
+      
+      ctx.fillStyle = theme.scoreLabel;
+      ctx.font = `${Math.round(this.rpx(16))}px system-ui`;
+      ctx.textAlign = 'right';
+      ctx.fillText('BEST', statsX, centerY - this.rpx(16));
+      
+      ctx.fillStyle = theme.scoreValue;
+      ctx.font = `bold ${Math.round(this.rpx(30))}px system-ui`;
+      ctx.fillText(bestScore.toString(), statsX, centerY + this.rpx(12));
+      
+      if (hasSave) {
+        const saveBadgeX = card.x + card.width - this.rpx(100);
+        const saveBadgeY = card.y + this.rpx(20);
+        const badgeWidth = this.rpx(72);
+        const badgeHeight = this.rpx(36);
+        
+        const badgeGradient = ctx.createLinearGradient(saveBadgeX, saveBadgeY, saveBadgeX + badgeWidth, saveBadgeY);
+        badgeGradient.addColorStop(0, theme.cardAccent[0]);
+        badgeGradient.addColorStop(1, theme.cardAccent[1]);
+        
+        ctx.fillStyle = badgeGradient;
+        this.drawRoundedRect(saveBadgeX, saveBadgeY, badgeWidth, badgeHeight, this.rpx(18));
+        ctx.fill();
+        
+        ctx.fillStyle = this.isDark ? '#0D1B2A' : '#FFFFFF';
+        ctx.font = `bold ${Math.round(this.rpx(16))}px system-ui`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('继续', saveBadgeX + badgeWidth / 2, saveBadgeY + badgeHeight / 2);
+      }
+    }
   }
   
   drawScoreCards() {
@@ -1056,13 +1413,195 @@ class Game2048 {
     ctx.fillText(subMessage, centerX, centerY + this.rpx(20));
   }
   
+  drawPopstarTitle() {
+    const theme = this.isDark ? themes.dark : themes.light;
+    const ctx = this.ctx;
+    
+    const titleX = this.gameX + this.gameWidth / 2;
+    
+    const gradient = ctx.createLinearGradient(titleX - this.rpx(100), this.titleY - this.rpx(40), titleX + this.rpx(100), this.titleY);
+    gradient.addColorStop(0, theme.titleGradient[0]);
+    gradient.addColorStop(1, theme.titleGradient[1]);
+    
+    ctx.fillStyle = gradient;
+    ctx.font = `bold ${Math.round(this.titleFontSize * 0.8)}px system-ui`;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('POPSTAR', this.gameX, this.titleY);
+    
+    ctx.fillStyle = theme.titleText;
+    ctx.font = `bold ${Math.round(this.titleFontSize * 0.5)}px system-ui`;
+    ctx.textAlign = 'right';
+    ctx.fillText(`LEVEL ${this.popstarLevel}`, this.gameX + this.gameWidth, this.titleY);
+  }
+  
+  drawPopstarScoreCards() {
+    const theme = this.isDark ? themes.dark : themes.light;
+    const ctx = this.ctx;
+    
+    const totalWidth = this.scoreCardWidth * 2 + this.scoreCardsGap;
+    const startX = this.gameX + (this.gameWidth - totalWidth) / 2;
+    
+    this.drawScoreCard('SCORE', this.popstarScore, startX, this.scoreCardsY, this.scoreCardWidth, this.scoreCardHeight);
+    this.drawScoreCard('TARGET', this.popstarTargetScore, startX + this.scoreCardWidth + this.scoreCardsGap, this.scoreCardsY, this.scoreCardWidth, this.scoreCardHeight);
+  }
+  
+  drawPopstarBoard() {
+    const theme = this.isDark ? themes.dark : themes.light;
+    const ctx = this.ctx;
+
+    ctx.shadowColor = this.isDark ? 'rgba(0, 0, 0, 0.3)' : 'rgba(0, 0, 0, 0.06)';
+    ctx.shadowBlur = this.isDark ? this.rpx(16) : this.rpx(10);
+    ctx.shadowOffsetY = this.isDark ? this.rpx(4) : this.rpx(2);
+
+    ctx.fillStyle = theme.boardBg;
+    this.drawRoundedRect(this.boardX, this.boardY, this.boardSize, this.boardSize, this.boardRadius);
+    ctx.fill();
+
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetY = 0;
+
+    const cellSize = this.popstarCellSize;
+    for (let y = 0; y < this.popstarGridSize; y++) {
+      for (let x = 0; x < this.popstarGridSize; x++) {
+        const posX = this.boardX + this.cellGap + x * (cellSize + this.cellGap);
+        const posY = this.boardY + this.cellGap + y * (cellSize + this.cellGap);
+        ctx.fillStyle = theme.cellBg;
+        this.drawRoundedRect(posX, posY, cellSize, cellSize, this.cellRadius * 0.6);
+        ctx.fill();
+      }
+    }
+  }
+  
+  getPopstarStarPosition(row, col) {
+    const cellSize = this.popstarCellSize;
+    return {
+      x: Math.round(this.boardX + this.cellGap + col * (cellSize + this.cellGap)),
+      y: Math.round(this.boardY + this.cellGap + row * (cellSize + this.cellGap))
+    };
+  }
+  
+  getPopstarStarStyle(colorIndex) {
+    const theme = this.isDark ? themes.dark : themes.light;
+    return theme.popstarStars[colorIndex] || theme.popstarStars[0];
+  }
+  
+  drawPopstarStars() {
+    const ctx = this.ctx;
+    const cellSize = this.popstarCellSize;
+
+    for (let row = 0; row < this.popstarGridSize; row++) {
+      for (let col = 0; col < this.popstarGridSize; col++) {
+        const colorIndex = this.popstarBoard[row][col];
+        if (colorIndex === null) continue;
+
+        const pos = this.getPopstarStarPosition(row, col);
+        const style = this.getPopstarStarStyle(colorIndex);
+        
+        let isHighlighted = false;
+        for (const hPos of this.popstarHighlighted) {
+          if (hPos.row === row && hPos.col === col) {
+            isHighlighted = true;
+            break;
+          }
+        }
+
+        ctx.shadowColor = this.isDark ? 'rgba(0, 0, 0, 0.35)' : 'rgba(0, 0, 0, 0.08)';
+        ctx.shadowBlur = this.isDark ? this.rpx(8) : this.rpx(6);
+        ctx.shadowOffsetY = this.isDark ? this.rpx(2) : this.rpx(1);
+
+        if (isHighlighted && style.glow) {
+          ctx.shadowColor = style.glow;
+          ctx.shadowBlur = this.isDark ? this.rpx(20) : this.rpx(16);
+        }
+
+        ctx.fillStyle = style.bg;
+        this.drawRoundedRect(pos.x, pos.y, cellSize, cellSize, this.cellRadius * 0.6);
+        ctx.fill();
+
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetY = 0;
+        
+        ctx.fillStyle = style.text;
+        ctx.font = `bold ${Math.round(cellSize * 0.35)}px system-ui`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('★', pos.x + cellSize / 2, pos.y + cellSize / 2);
+      }
+    }
+  }
+  
+  drawPopstarOverlay() {
+    if (!this.popstarIsGameOver && !this.popstarIsLevelClear) return;
+
+    const theme = this.isDark ? themes.dark : themes.light;
+    const ctx = this.ctx;
+
+    ctx.shadowColor = this.isDark ? 'rgba(0, 0, 0, 0.4)' : 'rgba(0, 0, 0, 0.1)';
+    ctx.shadowBlur = this.isDark ? this.rpx(20) : this.rpx(12);
+    ctx.shadowOffsetY = this.isDark ? this.rpx(6) : this.rpx(3);
+
+    ctx.fillStyle = theme.overlayBg;
+    this.drawRoundedRect(this.boardX, this.boardY, this.boardSize, this.boardSize, this.boardRadius);
+    ctx.fill();
+
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetY = 0;
+
+    const centerX = this.boardX + this.boardSize / 2;
+    const centerY = this.boardY + this.boardSize / 2;
+    
+    const remaining = countRemainingStars(this.popstarBoard);
+    const bonus = calculateBonus(remaining);
+
+    let message, subMessage1, subMessage2, subMessage3;
+    
+    if (this.popstarIsLevelClear) {
+      message = 'LEVEL CLEAR';
+      subMessage1 = `Score: ${this.popstarScore}`;
+      subMessage2 = bonus > 0 ? `Bonus: +${bonus}` : '';
+      subMessage3 = `Total: ${this.popstarTotalScore}`;
+    } else {
+      message = 'GAME OVER';
+      subMessage1 = `Score: ${this.popstarScore}`;
+      subMessage2 = bonus > 0 ? `Bonus: +${bonus}` : '';
+      subMessage3 = `Target: ${this.popstarTargetScore}`;
+    }
+
+    const gradient = ctx.createLinearGradient(centerX - this.rpx(100), centerY - this.rpx(40), centerX + this.rpx(100), centerY);
+    gradient.addColorStop(0, theme.titleGradient[0]);
+    gradient.addColorStop(1, theme.titleGradient[1]);
+
+    ctx.fillStyle = gradient;
+    ctx.font = `bold ${Math.round(this.rpx(32))}px system-ui`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(message, centerX, centerY - this.rpx(40));
+
+    ctx.fillStyle = theme.scoreLabel;
+    ctx.font = `${Math.round(this.rpx(16))}px system-ui`;
+    ctx.fillText(subMessage1, centerX, centerY - this.rpx(10));
+    
+    if (subMessage2) {
+      ctx.fillText(subMessage2, centerX, centerY + this.rpx(10));
+    }
+    
+    ctx.fillText(subMessage3, centerX, centerY + this.rpx(30));
+  }
+  
   renderHome() {
+    this.drawBackground();
+    this.drawHomeTitle();
+    this.drawGameTypeCards();
+  }
+  
+  render2048ModeSelect() {
     this.drawBackground();
     this.drawHomeTitle();
     this.drawModeCards();
   }
   
-  renderGame() {
+  render2048Game() {
     this.drawBackground();
     this.drawTitle();
     this.drawScoreCards();
@@ -1073,11 +1612,25 @@ class Game2048 {
     this.drawOverlay();
   }
   
+  renderPopstar() {
+    this.drawBackground();
+    this.drawPopstarTitle();
+    this.drawPopstarScoreCards();
+    this.drawPopstarBoard();
+    this.drawPopstarStars();
+    this.drawActionButtons();
+    this.drawPopstarOverlay();
+  }
+  
   render() {
     if (this.currentScene === SCENE.HOME) {
       this.renderHome();
-    } else {
-      this.renderGame();
+    } else if (this.currentScene === SCENE.HOME_2048_MODE) {
+      this.render2048ModeSelect();
+    } else if (this.currentScene === SCENE.GAME_2048) {
+      this.render2048Game();
+    } else if (this.currentScene === SCENE.GAME_POPSTAR) {
+      this.renderPopstar();
     }
   }
   
