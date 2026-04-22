@@ -462,6 +462,16 @@ class Game2048 {
     this.popstarHighlighted = new Set();
   }
   
+  restartCurrentPopstarLevel() {
+    const colorCount = getColorCount(this.popstarLevel);
+    this.popstarScore = 0;
+    this.popstarTargetScore = getTargetScore(this.popstarLevel);
+    this.popstarBoard = createBoard(colorCount);
+    this.popstarIsGameOver = false;
+    this.popstarIsLevelClear = false;
+    this.popstarHighlighted = new Set();
+  }
+  
   get popstarGridSize() {
     return POPSTAR_GRID_SIZE;
   }
@@ -737,7 +747,7 @@ class Game2048 {
           if (this.popstarIsLevelClear) {
             this.nextPopstarLevel();
           } else {
-            this.initPopstarGame();
+            this.restartCurrentPopstarLevel();
           }
         }
         buttonClicked = true;
@@ -790,7 +800,7 @@ class Game2048 {
           if (this.popstarIsLevelClear) {
             this.nextPopstarLevel();
           } else {
-            this.initPopstarGame();
+            this.restartCurrentPopstarLevel();
           }
           buttonClicked = true;
         }
