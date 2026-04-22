@@ -680,7 +680,7 @@ class Game2048 {
         this.popstarTotalScore += bonus;
       }
       
-      if (this.popstarTotalScore >= this.popstarTargetScore) {
+      if (this.popstarScore >= this.popstarTargetScore) {
         this.popstarIsLevelClear = true;
         this.soundManager.playLevelClear();
       } else {
