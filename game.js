@@ -1758,22 +1758,22 @@ class Game2048 {
 
         ctx.save();
         
-        const starDropShadowColor = style.starShadow || (this.isDark ? 'rgba(0, 0, 0, 0.7)' : 'rgba(0, 0, 0, 0.45)');
+        const starDropShadowColor = style.starShadow || (this.isDark ? 'rgba(0, 0, 0, 0.8)' : 'rgba(0, 0, 0, 0.55)');
         ctx.shadowColor = starDropShadowColor;
-        ctx.shadowBlur = this.rpx(isHighlighted ? 12 : 8);
-        ctx.shadowOffsetX = this.rpx(isHighlighted ? 3 : 2);
-        ctx.shadowOffsetY = this.rpx(isHighlighted ? 6 : 4);
+        ctx.shadowBlur = this.rpx(isHighlighted ? 16 : 11);
+        ctx.shadowOffsetX = this.rpx(isHighlighted ? 4 : 3);
+        ctx.shadowOffsetY = this.rpx(isHighlighted ? 8 : 5);
         
         this.drawRoundedStarPath(ctx, starCenterX, starCenterY, starOuterRadius, starInnerRadius, outerCornerRadius, innerCornerRadius);
         
         const starBaseGradient = ctx.createLinearGradient(
-          starCenterX - starOuterRadius * 0.5,
-          starCenterY - starOuterRadius * 0.5,
-          starCenterX + starOuterRadius * 0.5,
-          starCenterY + starOuterRadius * 0.5
+          starCenterX - starOuterRadius * 0.6,
+          starCenterY - starOuterRadius * 0.6,
+          starCenterX + starOuterRadius * 0.4,
+          starCenterY + starOuterRadius * 0.4
         );
         starBaseGradient.addColorStop(0, style.starBg || style.bg);
-        starBaseGradient.addColorStop(0.4, style.starBgEnd || style.bgEnd);
+        starBaseGradient.addColorStop(0.5, style.starBgEnd || style.bgEnd);
         starBaseGradient.addColorStop(1, style.bgEnd);
         
         ctx.fillStyle = starBaseGradient;
@@ -1786,36 +1786,35 @@ class Game2048 {
         ctx.globalCompositeOperation = 'source-atop';
         
         const innerHighlightGradient = ctx.createLinearGradient(
-          starCenterX - starOuterRadius * 0.8,
-          starCenterY - starOuterRadius * 0.8,
-          starCenterX + starOuterRadius * 0.2,
-          starCenterY + starOuterRadius * 0.2
+          starCenterX - starOuterRadius * 0.9,
+          starCenterY - starOuterRadius * 0.9,
+          starCenterX + starOuterRadius * 0.3,
+          starCenterY + starOuterRadius * 0.3
         );
-        const highlightOpacity = this.isDark ? 0.45 : 0.65;
+        const highlightOpacity = this.isDark ? 0.55 : 0.75;
         innerHighlightGradient.addColorStop(0, `rgba(255, 255, 255, ${highlightOpacity})`);
-        innerHighlightGradient.addColorStop(0.25, `rgba(255, 255, 255, ${highlightOpacity * 0.7})`);
-        innerHighlightGradient.addColorStop(0.5, `rgba(255, 255, 255, ${highlightOpacity * 0.3})`);
+        innerHighlightGradient.addColorStop(0.2, `rgba(255, 255, 255, ${highlightOpacity * 0.8})`);
+        innerHighlightGradient.addColorStop(0.4, `rgba(255, 255, 255, ${highlightOpacity * 0.5})`);
+        innerHighlightGradient.addColorStop(0.6, `rgba(255, 255, 255, ${highlightOpacity * 0.2})`);
         innerHighlightGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
         
         ctx.fillStyle = innerHighlightGradient;
         this.drawRoundedStarPath(ctx, starCenterX, starCenterY, starOuterRadius, starInnerRadius, outerCornerRadius, innerCornerRadius);
         ctx.fill();
         
-        const innerShadowOffset = this.rpx(isHighlighted ? 4 : 3);
-        const innerShadowGradient = ctx.createRadialGradient(
-          starCenterX + innerShadowOffset,
-          starCenterY + innerShadowOffset,
-          starOuterRadius * 0.3,
-          starCenterX,
-          starCenterY,
-          starOuterRadius
+        const edgeHighlightGradient = ctx.createLinearGradient(
+          starCenterX - starOuterRadius,
+          starCenterY - starOuterRadius,
+          starCenterX + starOuterRadius * 0.2,
+          starCenterY + starOuterRadius * 0.2
         );
-        const shadowOpacity = this.isDark ? 0.5 : 0.35;
-        innerShadowGradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
-        innerShadowGradient.addColorStop(0.6, `rgba(0, 0, 0, ${shadowOpacity * 0.5})`);
-        innerShadowGradient.addColorStop(1, `rgba(0, 0, 0, ${shadowOpacity})`);
+        const edgeHighlightOpacity = this.isDark ? 0.35 : 0.45;
+        edgeHighlightGradient.addColorStop(0, `rgba(255, 255, 255, ${edgeHighlightOpacity})`);
+        edgeHighlightGradient.addColorStop(0.3, `rgba(255, 255, 255, ${edgeHighlightOpacity * 0.6})`);
+        edgeHighlightGradient.addColorStop(0.6, `rgba(255, 255, 255, ${edgeHighlightOpacity * 0.3})`);
+        edgeHighlightGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
         
-        ctx.fillStyle = innerShadowGradient;
+        ctx.fillStyle = edgeHighlightGradient;
         this.drawRoundedStarPath(ctx, starCenterX, starCenterY, starOuterRadius, starInnerRadius, outerCornerRadius, innerCornerRadius);
         ctx.fill();
         
