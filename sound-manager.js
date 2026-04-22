@@ -10,26 +10,62 @@ const SOUND_CONFIG = {
   button_click: 'audio/button_click.mp3'
 };
 
+function isWeChatEnvironment() {
+  return typeof wx !== 'undefined' && wx.createInnerAudioContext;
+}
+
+function isBrowserEnvironment() {
+  return typeof Audio !== 'undefined' || (typeof window !== 'undefined' && window.Audio);
+}
+
 class SoundManager {
   constructor() {
     this.enabled = true;
     this.sounds = {};
+    this.env = this.detectEnvironment();
     this.initSounds();
     this.loadPreference();
   }
 
-  initSounds() {
-    if (typeof wx === 'undefined' || !wx.createInnerAudioContext) {
-      return;
+  detectEnvironment() {
+    if (isWeChatEnvironment()) {
+      return 'wechat';
+    } else if (isBrowserEnvironment()) {
+      return 'browser';
     }
+    return 'none';
+  }
 
+  initSounds() {
+    if (this.env === 'wechat') {
+      this.initWeChatSounds();
+    } else if (this.env === 'browser') {
+      this.initBrowserSounds();
+    }
+  }
+
+  initWeChatSounds() {
     for (const [key, src] of Object.entries(SOUND_CONFIG)) {
       try {
         const audio = wx.createInnerAudioContext();
         audio.src = src;
         this.sounds[key] = audio;
       } catch (e) {
-        console.warn(`Failed to create audio for ${key}:`, e);
+        console.warn(`Failed to create wechat audio for ${key}:`, e);
+      }
+    }
+  }
+
+  initBrowserSounds() {
+    const AudioClass = typeof Audio !== 'undefined' ? Audio : window.Audio;
+    for (const [key, src] of Object.entries(SOUND_CONFIG)) {
+      try {
+        const audio = new AudioClass();
+        audio.src = src;
+        audio.preload = 'auto';
+        this.sounds[key] = audio;
+      } catch (e) {
+        console.warn(`Failed to create browser audio for ${key}:`, e);
       }
     }
   }
@@ -42,12 +78,37 @@ class SoundManager {
     const { volume = 1, playbackRate = 1 } = options;
 
     try {
-      audio.stop();
-      audio.volume = volume;
-      audio.playbackRate = playbackRate;
-      audio.play();
+      if (this.env === 'wechat') {
+        this.playWeChatAudio(audio, volume, playbackRate);
+      } else if (this.env === 'browser') {
+        this.playBrowserAudio(audio, volume, playbackRate);
+      }
     } catch (e) {
       console.warn(`Failed to play sound ${name}:`, e);
+    }
+  }
+
+  playWeChatAudio(audio, volume, playbackRate) {
+    audio.stop();
+    audio.volume = volume;
+    audio.playbackRate = playbackRate;
+    audio.play();
+  }
+
+  playBrowserAudio(audio, volume, playbackRate) {
+    try {
+      audio.pause();
+      audio.currentTime = 0;
+      audio.volume = volume;
+      audio.playbackRate = playbackRate;
+      const playPromise = audio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(e => {
+          console.log('Audio play failed, user interaction required:', e);
+        });
+      }
+    } catch (e) {
+      console.warn('Browser audio play error:', e);
     }
   }
 
@@ -106,10 +167,26 @@ class SoundManager {
     return this.enabled;
   }
 
+  getStorageAdapter() {
+    if (this.env === 'wechat' && typeof wx !== 'undefined') {
+      return {
+        get: (key) => wx.getStorageSync(key),
+        set: (key, value) => wx.setStorageSync(key, value)
+      };
+    } else if (this.env === 'browser' && typeof localStorage !== 'undefined') {
+      return {
+        get: (key) => localStorage.getItem(key),
+        set: (key, value) => localStorage.setItem(key, value)
+      };
+    }
+    return null;
+  }
+
   savePreference() {
     try {
-      if (typeof wx !== 'undefined' && wx.setStorageSync) {
-        wx.setStorageSync('sound-enabled', this.enabled);
+      const storage = this.getStorageAdapter();
+      if (storage) {
+        storage.set('sound-enabled', this.enabled);
       }
     } catch (e) {
       console.warn('Failed to save sound preference:', e);
@@ -118,15 +195,24 @@ class SoundManager {
 
   loadPreference() {
     try {
-      if (typeof wx !== 'undefined' && wx.getStorageSync) {
-        const saved = wx.getStorageSync('sound-enabled');
+      const storage = this.getStorageAdapter();
+      if (storage) {
+        const saved = storage.get('sound-enabled');
         if (saved !== undefined && saved !== null) {
-          this.enabled = saved;
+          if (typeof saved === 'string') {
+            this.enabled = saved === 'true';
+          } else {
+            this.enabled = saved;
+          }
         }
       }
     } catch (e) {
       console.warn('Failed to load sound preference:', e);
     }
+  }
+
+  getEnvironment() {
+    return this.env;
   }
 }
 

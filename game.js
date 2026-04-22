@@ -233,6 +233,7 @@ class Game2048 {
     this.newGameBtnHeight = this.rpx(80);
     this.themeBtnSize = this.rpx(88);
     this.homeBtnSize = this.rpx(88);
+    this.soundBtnSize = this.rpx(88);
 
     this.scoreCardWidth = this.rpx(160);
     this.scoreCardHeight = this.rpx(96);
@@ -723,7 +724,7 @@ class Game2048 {
         }
       }
     } else {
-      const totalActionWidth = this.newGameBtnWidth + this.actionBtnsGap + this.homeBtnSize + this.actionBtnsGap + this.themeBtnSize;
+      const totalActionWidth = this.newGameBtnWidth + this.actionBtnsGap + this.homeBtnSize + this.actionBtnsGap + this.soundBtnSize + this.actionBtnsGap + this.themeBtnSize;
       const actionStartX = this.gameX + (this.gameWidth - totalActionWidth) / 2;
       
       const newGameBtnX = actionStartX;
@@ -753,7 +754,17 @@ class Game2048 {
       }
       
       if (!buttonClicked) {
-        const themeBtnX = actionStartX + this.newGameBtnWidth + this.actionBtnsGap + this.homeBtnSize + this.actionBtnsGap;
+        const soundBtnX = actionStartX + this.newGameBtnWidth + this.actionBtnsGap + this.homeBtnSize + this.actionBtnsGap;
+        const soundBtnY = this.actionY;
+        if (x >= soundBtnX && x <= soundBtnX + this.soundBtnSize && 
+            y >= soundBtnY && y <= soundBtnY + this.soundBtnSize) {
+          this.soundManager.toggle();
+          buttonClicked = true;
+        }
+      }
+      
+      if (!buttonClicked) {
+        const themeBtnX = actionStartX + this.newGameBtnWidth + this.actionBtnsGap + this.homeBtnSize + this.actionBtnsGap + this.soundBtnSize + this.actionBtnsGap;
         const themeBtnY = this.actionY;
         if (x >= themeBtnX && x <= themeBtnX + this.themeBtnSize && 
             y >= themeBtnY && y <= themeBtnY + this.themeBtnSize) {
@@ -1360,7 +1371,7 @@ class Game2048 {
     const theme = this.isDark ? themes.dark : themes.light;
     const ctx = this.ctx;
 
-    const totalActionWidth = this.newGameBtnWidth + this.actionBtnsGap + this.homeBtnSize + this.actionBtnsGap + this.themeBtnSize;
+    const totalActionWidth = this.newGameBtnWidth + this.actionBtnsGap + this.homeBtnSize + this.actionBtnsGap + this.soundBtnSize + this.actionBtnsGap + this.themeBtnSize;
     const actionStartX = this.gameX + (this.gameWidth - totalActionWidth) / 2;
 
     const newGameBtnX = actionStartX;
@@ -1401,7 +1412,25 @@ class Game2048 {
     ctx.font = `${Math.round(this.rpx(28))}px system-ui`;
     ctx.fillText('🏠', homeBtnX + Math.round(this.homeBtnSize / 2), homeBtnY + Math.round(this.homeBtnSize / 2));
 
-    const themeBtnX = actionStartX + this.newGameBtnWidth + this.actionBtnsGap + this.homeBtnSize + this.actionBtnsGap;
+    const soundBtnX = actionStartX + this.newGameBtnWidth + this.actionBtnsGap + this.homeBtnSize + this.actionBtnsGap;
+    const soundBtnY = this.actionY;
+
+    ctx.shadowColor = this.isDark ? 'rgba(0, 0, 0, 0.25)' : 'rgba(0, 0, 0, 0.06)';
+    ctx.shadowBlur = this.isDark ? this.rpx(10) : this.rpx(6);
+    ctx.shadowOffsetY = this.isDark ? this.rpx(3) : this.rpx(2);
+
+    ctx.fillStyle = theme.themeBtnBg;
+    this.drawRoundedRect(soundBtnX, soundBtnY, this.soundBtnSize, this.soundBtnSize, Math.round(this.soundBtnSize / 2));
+    ctx.fill();
+
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetY = 0;
+
+    ctx.font = `${Math.round(this.rpx(30))}px system-ui`;
+    const soundIcon = this.soundManager.isEnabled() ? '🔊' : '🔇';
+    ctx.fillText(soundIcon, soundBtnX + Math.round(this.soundBtnSize / 2), soundBtnY + Math.round(this.soundBtnSize / 2));
+
+    const themeBtnX = actionStartX + this.newGameBtnWidth + this.actionBtnsGap + this.homeBtnSize + this.actionBtnsGap + this.soundBtnSize + this.actionBtnsGap;
     const themeBtnY = this.actionY;
 
     ctx.shadowColor = this.isDark ? 'rgba(0, 0, 0, 0.25)' : 'rgba(0, 0, 0, 0.06)';
