@@ -115,7 +115,6 @@ const themes = {
       wall: 'rgba(180, 200, 220, 0.6)',
       inner: 'rgba(240, 245, 250, 0.3)',
       highlight: 'rgba(255, 255, 255, 0.25)',
-      base: 'rgba(180, 200, 220, 0.3)',
       rim: 'rgba(180, 200, 220, 0.7)',
       shadow: 'rgba(0, 0, 0, 0.06)'
     },
@@ -178,7 +177,6 @@ const themes = {
       wall: 'rgba(100, 130, 170, 0.4)',
       inner: 'rgba(30, 50, 80, 0.3)',
       highlight: 'rgba(255, 255, 255, 0.15)',
-      base: 'rgba(60, 90, 130, 0.3)',
       rim: 'rgba(100, 130, 170, 0.5)',
       shadow: 'rgba(0, 0, 0, 0.2)'
     },
@@ -1169,8 +1167,6 @@ class Game2048 {
     const tubeWallWidth = this.rpx(2);
     const tubeOpenWidth = tubeWidth + this.rpx(6);
     
-    const maxBaseHeight = this.rpx(24);
-    
     const totalTubesWidth = cols * tubeWidth + (cols - 1) * tubeGap;
     const totalTubesHeight = rows * tubeHeight + (rows - 1) * rowGap;
     
@@ -1200,19 +1196,13 @@ class Game2048 {
     this.watersortTubeWallWidth = tubeWallWidth;
     this.watersortTubeOpenWidth = tubeOpenWidth;
     
-    const centerCol = (cols - 1) / 2;
-    const maxColDist = Math.max(centerCol, 1);
-    
     this.watersortTubesLayout = [];
     for (let i = 0; i < tubeCount; i++) {
       const row = Math.floor(i / cols);
       const col = i % cols;
       
-      const colDist = Math.abs(col - centerCol);
-      const baseHeight = maxBaseHeight * (1 - colDist / maxColDist);
-      
       const tubeX = this.boardX + (this.boardSize - totalTubesWidth) / 2 + col * (tubeWidth + tubeGap);
-      const tubeY = this.watersortTubeAreaY + row * (tubeHeight + rowGap + maxBaseHeight);
+      const tubeY = this.watersortTubeAreaY + row * (tubeHeight + rowGap);
       
       this.watersortTubesLayout.push({
         index: i,
@@ -1220,7 +1210,6 @@ class Game2048 {
         y: tubeY,
         width: tubeWidth,
         height: tubeHeight,
-        baseHeight: baseHeight,
         row: row,
         col: col,
         cols: cols,
@@ -1241,40 +1230,7 @@ class Game2048 {
     return colors[colorIndex] || colors[0];
   }
   
-  drawWatersortTubeBase(layout) {
-    const theme = this.isDark ? themes.dark : themes.light;
-    const ctx = this.ctx;
-    
-    const baseHeight = layout.baseHeight;
-    if (baseHeight <= 0) return;
-    
-    const tubeWidth = layout.width;
-    const tubeHeight = layout.height;
-    const x = layout.x;
-    const y = layout.y + tubeHeight;
-    
-    const baseTopWidth = tubeWidth * 0.85;
-    const baseBottomWidth = tubeWidth * 0.95;
-    
-    ctx.save();
-    
-    ctx.fillStyle = theme.watersortTube.base;
-    
-    ctx.beginPath();
-    ctx.moveTo(x + (tubeWidth - baseTopWidth) / 2, y);
-    ctx.lineTo(x + (tubeWidth + baseTopWidth) / 2, y);
-    ctx.lineTo(x + (tubeWidth + baseBottomWidth) / 2, y + baseHeight);
-    ctx.lineTo(x + (tubeWidth - baseBottomWidth) / 2, y + baseHeight);
-    ctx.closePath();
-    ctx.fill();
-    
-    ctx.restore();
-  }
-  
   drawWatersortTubes() {
-    for (let i = 0; i < this.watersortTubeCount; i++) {
-      this.drawWatersortTubeBase(this.watersortTubesLayout[i]);
-    }
     for (let i = 0; i < this.watersortTubeCount; i++) {
       this.drawWatersortTube(i);
     }
