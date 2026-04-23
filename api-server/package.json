@@ -1,0 +1,23 @@
+{
+  "name": "minigames-leaderboard-api",
+  "version": "1.0.0",
+  "description": "Vercel Serverless API for minigames leaderboard",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel --prod"
+  },
+  "keywords": [
+    "vercel",
+    "serverless",
+    "minigame",
+    "leaderboard"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.0",
+    "axios": "^1.6.0",
+    "jsonwebtoken": "^9.0.2"
+  }
+}
