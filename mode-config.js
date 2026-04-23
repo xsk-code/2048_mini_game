@@ -14,6 +14,14 @@ const gameTypes = [
     icon: '✦',
     bestScoreStorageKey: 'popstar-best',
     saveStateStorageKey: 'popstar-save'
+  },
+  {
+    id: 'watersort',
+    label: '水排序',
+    subtitle: 'WATER SORT',
+    icon: '💧',
+    bestScoreStorageKey: 'watersort-best',
+    saveStateStorageKey: 'watersort-save'
   }
 ];
 
