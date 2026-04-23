@@ -114,7 +114,10 @@ const themes = {
     watersortTube: {
       wall: 'rgba(180, 200, 220, 0.6)',
       inner: 'rgba(240, 245, 250, 0.3)',
-      highlight: 'rgba(255, 255, 255, 0.25)'
+      highlight: 'rgba(255, 255, 255, 0.25)',
+      base: 'rgba(180, 200, 220, 0.3)',
+      rim: 'rgba(180, 200, 220, 0.7)',
+      shadow: 'rgba(0, 0, 0, 0.06)'
     },
     watersortLiquids: [
       { light: '#FF6B8A', dark: '#E8506E', highlight: 'rgba(255,255,255,0.35)' },
@@ -174,7 +177,10 @@ const themes = {
     watersortTube: {
       wall: 'rgba(100, 130, 170, 0.4)',
       inner: 'rgba(30, 50, 80, 0.3)',
-      highlight: 'rgba(255, 255, 255, 0.15)'
+      highlight: 'rgba(255, 255, 255, 0.15)',
+      base: 'rgba(60, 90, 130, 0.3)',
+      rim: 'rgba(100, 130, 170, 0.5)',
+      shadow: 'rgba(0, 0, 0, 0.2)'
     },
     watersortLiquids: [
       { light: '#E86080', dark: '#C05070', highlight: 'rgba(255,255,255,0.25)' },
@@ -1146,21 +1152,24 @@ class Game2048 {
   recalculateWatersortLayout() {
     const tubeCount = this.watersortTubeCount || 5;
     
-    const maxCols = Math.min(tubeCount, 4);
+    const maxCols = tubeCount <= 7 ? tubeCount : Math.ceil(tubeCount / 2);
     const rows = Math.ceil(tubeCount / maxCols);
     const cols = Math.min(tubeCount, maxCols);
     
     const maxTubeWidth = this.rpx(72);
+    const minTubeWidth = this.rpx(56);
     const tubeGap = this.rpx(24);
     const rowGap = this.rpx(32);
     
     const availableWidth = this.boardSize;
     const totalGapWidth = (cols - 1) * tubeGap;
-    let tubeWidth = Math.min(maxTubeWidth, (availableWidth - totalGapWidth) / cols);
+    let tubeWidth = Math.max(minTubeWidth, Math.min(maxTubeWidth, (availableWidth - totalGapWidth) / cols));
     
-    const tubeHeight = tubeWidth * 3.2;
+    const tubeHeight = tubeWidth * 3.0;
     const tubeWallWidth = this.rpx(2);
-    const tubeOpenWidth = tubeWidth + this.rpx(4);
+    const tubeOpenWidth = tubeWidth + this.rpx(6);
+    
+    const maxBaseHeight = this.rpx(24);
     
     const totalTubesWidth = cols * tubeWidth + (cols - 1) * tubeGap;
     const totalTubesHeight = rows * tubeHeight + (rows - 1) * rowGap;
@@ -1191,13 +1200,19 @@ class Game2048 {
     this.watersortTubeWallWidth = tubeWallWidth;
     this.watersortTubeOpenWidth = tubeOpenWidth;
     
+    const centerCol = (cols - 1) / 2;
+    const maxColDist = Math.max(centerCol, 1);
+    
     this.watersortTubesLayout = [];
     for (let i = 0; i < tubeCount; i++) {
       const row = Math.floor(i / cols);
       const col = i % cols;
       
+      const colDist = Math.abs(col - centerCol);
+      const baseHeight = maxBaseHeight * (1 - colDist / maxColDist);
+      
       const tubeX = this.boardX + (this.boardSize - totalTubesWidth) / 2 + col * (tubeWidth + tubeGap);
-      const tubeY = this.watersortTubeAreaY + row * (tubeHeight + rowGap);
+      const tubeY = this.watersortTubeAreaY + row * (tubeHeight + rowGap + maxBaseHeight);
       
       this.watersortTubesLayout.push({
         index: i,
@@ -1205,6 +1220,10 @@ class Game2048 {
         y: tubeY,
         width: tubeWidth,
         height: tubeHeight,
+        baseHeight: baseHeight,
+        row: row,
+        col: col,
+        cols: cols,
         hitX: tubeX - this.rpx(8),
         hitY: tubeY - this.rpx(8),
         hitWidth: tubeWidth + this.rpx(16),
@@ -1220,6 +1239,45 @@ class Game2048 {
     const theme = this.isDark ? themes.dark : themes.light;
     const colors = theme.watersortLiquids;
     return colors[colorIndex] || colors[0];
+  }
+  
+  drawWatersortTubeBase(layout) {
+    const theme = this.isDark ? themes.dark : themes.light;
+    const ctx = this.ctx;
+    
+    const baseHeight = layout.baseHeight;
+    if (baseHeight <= 0) return;
+    
+    const tubeWidth = layout.width;
+    const tubeHeight = layout.height;
+    const x = layout.x;
+    const y = layout.y + tubeHeight;
+    
+    const baseTopWidth = tubeWidth * 0.85;
+    const baseBottomWidth = tubeWidth * 0.95;
+    
+    ctx.save();
+    
+    ctx.fillStyle = theme.watersortTube.base;
+    
+    ctx.beginPath();
+    ctx.moveTo(x + (tubeWidth - baseTopWidth) / 2, y);
+    ctx.lineTo(x + (tubeWidth + baseTopWidth) / 2, y);
+    ctx.lineTo(x + (tubeWidth + baseBottomWidth) / 2, y + baseHeight);
+    ctx.lineTo(x + (tubeWidth - baseBottomWidth) / 2, y + baseHeight);
+    ctx.closePath();
+    ctx.fill();
+    
+    ctx.restore();
+  }
+  
+  drawWatersortTubes() {
+    for (let i = 0; i < this.watersortTubeCount; i++) {
+      this.drawWatersortTubeBase(this.watersortTubesLayout[i]);
+    }
+    for (let i = 0; i < this.watersortTubeCount; i++) {
+      this.drawWatersortTube(i);
+    }
   }
   
   drawWatersortTitle() {
@@ -1300,7 +1358,7 @@ class Game2048 {
     const wallWidth = this.watersortTubeWallWidth;
     const openWidth = this.watersortTubeOpenWidth;
     
-    const selectOffset = isSelected ? this.rpx(20) : 0;
+    const selectOffset = isSelected ? this.rpx(24) : 0;
     const baseX = layout.x;
     const baseY = layout.y - selectOffset;
     
@@ -1309,6 +1367,17 @@ class Game2048 {
     const bottomRadius = tubeWidth / 2;
     
     ctx.save();
+    
+    ctx.beginPath();
+    ctx.ellipse(
+      baseX + tubeWidth / 2,
+      baseY + tubeHeight + this.rpx(4),
+      tubeWidth * 0.4,
+      this.rpx(3),
+      0, 0, Math.PI * 2
+    );
+    ctx.fillStyle = theme.watersortTube.shadow;
+    ctx.fill();
     
     ctx.beginPath();
     ctx.moveTo(baseX + (tubeWidth - openWidth) / 2, baseY);
@@ -1333,6 +1402,34 @@ class Game2048 {
     ctx.lineWidth = wallWidth;
     ctx.stroke();
     
+    ctx.beginPath();
+    ctx.ellipse(
+      baseX + tubeWidth / 2,
+      baseY + this.rpx(2),
+      openWidth / 2,
+      this.rpx(2),
+      0, 0, Math.PI * 2
+    );
+    ctx.strokeStyle = theme.watersortTube.rim;
+    ctx.lineWidth = this.rpx(1.5);
+    ctx.stroke();
+    
+    ctx.beginPath();
+    ctx.moveTo(baseX + tubeWidth * 0.18, baseY + this.rpx(12));
+    ctx.lineTo(baseX + tubeWidth * 0.18, baseY + tubeHeight * 0.65);
+    ctx.strokeStyle = theme.watersortTube.highlight;
+    ctx.lineWidth = this.rpx(3);
+    ctx.lineCap = 'round';
+    ctx.stroke();
+    
+    ctx.beginPath();
+    ctx.moveTo(baseX + tubeWidth * 0.75, baseY + this.rpx(16));
+    ctx.lineTo(baseX + tubeWidth * 0.75, baseY + tubeHeight * 0.4);
+    ctx.strokeStyle = this.isDark ? 'rgba(255, 255, 255, 0.06)' : 'rgba(255, 255, 255, 0.1)';
+    ctx.lineWidth = this.rpx(1.5);
+    ctx.lineCap = 'round';
+    ctx.stroke();
+    
     const liquidColors = theme.watersortLiquids;
     let hasLiquid = false;
     
@@ -1344,6 +1441,10 @@ class Game2048 {
       }
     }
     
+    const liquidLeft = baseX + wallWidth + this.rpx(4);
+    const liquidRight = baseX + tubeWidth - wallWidth - this.rpx(4);
+    const liquidCenterX = (liquidLeft + liquidRight) / 2;
+    
     for (let layer = 0; layer < TUBE_CAPACITY; layer++) {
       const colorIndex = tube[layer];
       if (colorIndex === null) continue;
@@ -1353,71 +1454,164 @@ class Game2048 {
       const color = liquidColors[colorIndex] || liquidColors[0];
       
       const isTopLayer = layer === topMostIndex;
+      const isBottomLayer = layer === 0;
+      
+      const meniscusHeight = isTopLayer ? liquidHeight * 0.3 : 0;
+      
+      const nextColorIndex = layer + 1 < TUBE_CAPACITY ? tube[layer + 1] : null;
+      const isFusedWithAbove = nextColorIndex !== null && nextColorIndex === colorIndex;
       
       ctx.beginPath();
       
-      if (layer === 0) {
-        const radius = tubeWidth / 2 - wallWidth - this.rpx(4);
-        ctx.moveTo(baseX + wallWidth + this.rpx(4), liquidY);
-        ctx.lineTo(baseX + tubeWidth - wallWidth - this.rpx(4), liquidY);
-        ctx.lineTo(baseX + tubeWidth - wallWidth - this.rpx(4), liquidY + liquidHeight - radius);
+      if (isTopLayer) {
+        ctx.moveTo(liquidLeft, liquidY + meniscusHeight);
         ctx.quadraticCurveTo(
-          baseX + tubeWidth - wallWidth - this.rpx(4),
+          liquidCenterX, liquidY,
+          liquidRight, liquidY + meniscusHeight
+        );
+        ctx.lineTo(liquidRight, liquidY + liquidHeight);
+        ctx.lineTo(liquidLeft, liquidY + liquidHeight);
+        ctx.closePath();
+      } else if (isBottomLayer) {
+        const radius = tubeWidth / 2 - wallWidth - this.rpx(4);
+        ctx.moveTo(liquidLeft, liquidY);
+        ctx.lineTo(liquidRight, liquidY);
+        ctx.lineTo(liquidRight, liquidY + liquidHeight - radius);
+        ctx.quadraticCurveTo(
+          liquidRight,
           liquidY + liquidHeight,
-          baseX + tubeWidth / 2,
+          liquidCenterX,
           liquidY + liquidHeight
         );
         ctx.quadraticCurveTo(
-          baseX + wallWidth + this.rpx(4),
+          liquidLeft,
           liquidY + liquidHeight,
-          baseX + wallWidth + this.rpx(4),
+          liquidLeft,
           liquidY + liquidHeight - radius
         );
         ctx.closePath();
       } else {
-        ctx.rect(
-          baseX + wallWidth + this.rpx(4),
-          liquidY,
-          tubeWidth - wallWidth * 2 - this.rpx(8),
-          liquidHeight
-        );
+        ctx.rect(liquidLeft, liquidY, liquidRight - liquidLeft, liquidHeight);
       }
       
       const gradient = ctx.createLinearGradient(
-        baseX + tubeWidth / 2, liquidY,
-        baseX + tubeWidth / 2, liquidY + liquidHeight
+        liquidCenterX, liquidY,
+        liquidCenterX, liquidY + liquidHeight
       );
       gradient.addColorStop(0, color.light);
       gradient.addColorStop(1, color.dark);
       ctx.fillStyle = gradient;
       ctx.fill();
       
+      ctx.save();
+      ctx.beginPath();
+      if (isTopLayer) {
+        ctx.moveTo(liquidLeft, liquidY + meniscusHeight);
+        ctx.quadraticCurveTo(
+          liquidCenterX, liquidY,
+          liquidRight, liquidY + meniscusHeight
+        );
+        ctx.lineTo(liquidRight, liquidY + liquidHeight);
+        ctx.lineTo(liquidLeft, liquidY + liquidHeight);
+        ctx.closePath();
+      } else if (isBottomLayer) {
+        const radius = tubeWidth / 2 - wallWidth - this.rpx(4);
+        ctx.moveTo(liquidLeft, liquidY);
+        ctx.lineTo(liquidRight, liquidY);
+        ctx.lineTo(liquidRight, liquidY + liquidHeight - radius);
+        ctx.quadraticCurveTo(
+          liquidRight,
+          liquidY + liquidHeight,
+          liquidCenterX,
+          liquidY + liquidHeight
+        );
+        ctx.quadraticCurveTo(
+          liquidLeft,
+          liquidY + liquidHeight,
+          liquidLeft,
+          liquidY + liquidHeight - radius
+        );
+        ctx.closePath();
+      } else {
+        ctx.rect(liquidLeft, liquidY, liquidRight - liquidLeft, liquidHeight);
+      }
+      ctx.clip();
+      
+      const refractGradient = ctx.createLinearGradient(
+        liquidLeft, liquidY,
+        liquidLeft + (liquidRight - liquidLeft) * 0.35, liquidY
+      );
+      refractGradient.addColorStop(0, 'rgba(255, 255, 255, 0.12)');
+      refractGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+      ctx.fillStyle = refractGradient;
+      ctx.fillRect(liquidLeft, liquidY, liquidRight - liquidLeft, liquidY + liquidHeight);
+      
+      ctx.restore();
+      
+      if (isTopLayer && meniscusHeight > 0) {
+        ctx.beginPath();
+        ctx.moveTo(liquidLeft + this.rpx(1), liquidY + meniscusHeight - this.rpx(1));
+        ctx.quadraticCurveTo(
+          liquidCenterX, liquidY - this.rpx(1),
+          liquidRight - this.rpx(1), liquidY + meniscusHeight - this.rpx(1)
+        );
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+        ctx.lineWidth = this.rpx(1.5);
+        ctx.stroke();
+      }
+      
       if (isTopLayer || isSelected) {
         ctx.fillStyle = color.highlight;
-        ctx.fillRect(
-          baseX + wallWidth + this.rpx(6),
-          liquidY + this.rpx(2),
-          (tubeWidth - wallWidth * 2 - this.rpx(12)) * 0.4,
-          liquidHeight * 0.4
+        ctx.beginPath();
+        ctx.arc(
+          liquidLeft + (liquidRight - liquidLeft) * 0.25,
+          liquidY + liquidHeight * 0.3,
+          this.rpx(3),
+          0,
+          Math.PI * 2
         );
+        ctx.fill();
       }
     }
     
+    if (isSelected) {
+      ctx.beginPath();
+      ctx.ellipse(
+        baseX + tubeWidth / 2,
+        baseY + this.rpx(2),
+        openWidth / 2 + this.rpx(4),
+        this.rpx(6),
+        0, 0, Math.PI * 2
+      );
+      const glowGradient = ctx.createRadialGradient(
+        baseX + tubeWidth / 2, baseY,
+        0,
+        baseX + tubeWidth / 2, baseY,
+        openWidth / 2 + this.rpx(6)
+      );
+      glowGradient.addColorStop(0, 'rgba(255, 255, 255, 0.35)');
+      glowGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+      ctx.fillStyle = glowGradient;
+      ctx.fill();
+    }
+    
     if (isComplete && hasLiquid && !tube.every(c => c === null)) {
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-      ctx.font = `bold ${Math.round(tubeWidth * 0.4)}px system-ui`;
+      ctx.beginPath();
+      ctx.arc(baseX + tubeWidth / 2, baseY + this.rpx(20), this.rpx(10), 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+      ctx.lineWidth = this.rpx(1.5);
+      ctx.stroke();
+      
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+      ctx.font = `bold ${Math.round(tubeWidth * 0.3)}px system-ui`;
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText('✓', baseX + tubeWidth / 2, baseY + this.rpx(24));
+      ctx.fillText('✓', baseX + tubeWidth / 2, baseY + this.rpx(20));
     }
     
     ctx.restore();
-  }
-  
-  drawWatersortTubes() {
-    for (let i = 0; i < this.watersortTubeCount; i++) {
-      this.drawWatersortTube(i);
-    }
   }
   
   drawWatersortActionButtons() {
