@@ -102,7 +102,6 @@ class GameWatersort {
     this.watersortIsComplete = false;
     this.watersortSelectedTube = null;
     this.watersortTubeOffsets = new Array(this.watersortTubeCount).fill(0);
-    this.base.soundManager.playWatersortUndo();
   }
   
   undoWatersortMove() {
@@ -113,7 +112,6 @@ class GameWatersort {
       this.watersortMoves--;
       if (this.watersortMoves < 0) this.watersortMoves = 0;
       this.watersortSelectedTube = null;
-      this.base.soundManager.playWatersortUndo();
     }
   }
   
@@ -799,7 +797,6 @@ class GameWatersort {
           const tube = this.watersortTubes[i];
           if (getTopColor(tube) !== null) {
             this.watersortSelectedTube = i;
-            this.base.soundManager.playWatersortSelect();
           }
         } else if (this.watersortSelectedTube === i) {
           this.watersortSelectedTube = null;
@@ -820,19 +817,10 @@ class GameWatersort {
             });
             this.watersortMoves++;
             
-            this.base.soundManager.playWatersortPour();
-            
-            const fromComplete = isTubeComplete(this.watersortTubes[this.watersortSelectedTube]);
-            const toComplete = isTubeComplete(this.watersortTubes[i]);
-            if (fromComplete || toComplete) {
-              this.base.soundManager.playWatersortComplete();
-            }
-            
             this.saveWatersortCurrentState();
             
             if (isLevelComplete(this.watersortTubes)) {
               this.watersortIsComplete = true;
-              this.base.soundManager.playWatersortLevelClear();
               
               saveWatersortBestMoves(this.watersortLevel, this.watersortMoves);
               this.watersortBestMoves = loadWatersortBestMoves(this.watersortLevel);
@@ -850,9 +838,6 @@ class GameWatersort {
             const tube = this.watersortTubes[i];
             if (getTopColor(tube) !== null) {
               this.watersortSelectedTube = i;
-              this.base.soundManager.playWatersortSelect();
-            } else {
-              this.base.soundManager.playWatersortInvalid();
             }
           }
         }
