@@ -89,6 +89,7 @@ class BaseGame {
     this.themeBtnSize = this.rpx(88);
     this.homeBtnSize = this.rpx(88);
     this.soundBtnSize = this.rpx(88);
+    this.leaderboardBtnSize = this.rpx(88);
 
     this.scoreCardWidth = this.rpx(160);
     this.scoreCardHeight = this.rpx(96);
@@ -212,6 +213,13 @@ class BaseGame {
           break;
         }
       }
+      if (!buttonClicked && this.leaderboardBtn) {
+        if (x >= this.leaderboardBtn.x && x <= this.leaderboardBtn.x + this.leaderboardBtn.width &&
+            y >= this.leaderboardBtn.y && y <= this.leaderboardBtn.y + this.leaderboardBtn.height) {
+          this.enterLeaderboard();
+          buttonClicked = true;
+        }
+      }
     } else if (this.currentScene === SCENE.HOME_2048_MODE) {
       const backBtnSize = this.rpx(88);
       const backBtnX = this.gameX;
@@ -244,6 +252,9 @@ class BaseGame {
   }
   
   enterMode(modeId) {
+  }
+  
+  enterLeaderboard() {
   }
   
   goBackHome() {
@@ -416,6 +427,33 @@ class BaseGame {
     ctx.fillText('←', backBtnX + backBtnSize / 2, backBtnY + backBtnSize / 2);
   }
   
+  drawLeaderboardButton() {
+    const theme = this.theme;
+    const ctx = this.ctx;
+
+    const btnX = this.gameX + this.gameWidth - this.leaderboardBtnSize;
+    const btnY = this.homeTitleY - this.rpx(40);
+
+    ctx.shadowColor = this.isDark ? 'rgba(0, 0, 0, 0.25)' : 'rgba(0, 0, 0, 0.06)';
+    ctx.shadowBlur = this.isDark ? this.rpx(10) : this.rpx(6);
+    ctx.shadowOffsetY = this.isDark ? this.rpx(3) : this.rpx(2);
+
+    ctx.fillStyle = theme.themeBtnBg;
+    this.drawRoundedRect(btnX, btnY, this.leaderboardBtnSize, this.leaderboardBtnSize, Math.round(this.leaderboardBtnSize / 2));
+    ctx.fill();
+
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetY = 0;
+
+    ctx.fillStyle = theme.titleText;
+    ctx.font = Math.round(this.rpx(30)) + 'px system-ui';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('🏆', btnX + this.leaderboardBtnSize / 2, btnY + this.leaderboardBtnSize / 2);
+
+    this.leaderboardBtn = { x: btnX, y: btnY, width: this.leaderboardBtnSize, height: this.leaderboardBtnSize };
+  }
+  
   drawModeCards() {
     const theme = this.theme;
     const ctx = this.ctx;
@@ -502,6 +540,7 @@ class BaseGame {
     this.drawBackground();
     this.drawHomeTitle();
     this.drawGameTypeCards();
+    this.drawLeaderboardButton();
   }
   
   render() {
