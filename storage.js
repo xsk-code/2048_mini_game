@@ -163,6 +163,99 @@ function hasPopstarSaveState() {
   return loadPopstarSaveState() !== null;
 }
 
+function loadWatersortBestScore() {
+  const gameType = getGameTypeById('watersort');
+  try {
+    const saved = storage.get(gameType.bestScoreStorageKey);
+    if (saved !== null && saved !== undefined) {
+      return parseInt(saved, 10) || 0;
+    }
+  } catch (e) {
+    console.error('Failed to load watersort best score:', e);
+  }
+  return 0;
+}
+
+function saveWatersortBestScore(level) {
+  const gameType = getGameTypeById('watersort');
+  try {
+    storage.set(gameType.bestScoreStorageKey, level.toString());
+  } catch (e) {
+    console.error('Failed to save watersort best score:', e);
+  }
+}
+
+function loadWatersortSaveState() {
+  const gameType = getGameTypeById('watersort');
+  try {
+    const saved = storage.get(gameType.saveStateStorageKey);
+    if (saved) {
+      const state = typeof saved === 'string' ? JSON.parse(saved) : saved;
+      if (state && state.tubes && state.level !== undefined) {
+        return state;
+      }
+    }
+  } catch (e) {
+    console.error('Failed to load watersort save state:', e);
+  }
+  return null;
+}
+
+function saveWatersortSaveState(state) {
+  const gameType = getGameTypeById('watersort');
+  try {
+    const saveData = {
+      tubes: state.tubes,
+      level: state.level,
+      colorCount: state.colorCount,
+      tubeCount: state.tubeCount,
+      moves: state.moves,
+      history: state.history,
+      initialTubes: state.initialTubes,
+      isComplete: state.isComplete || false
+    };
+    storage.set(gameType.saveStateStorageKey, JSON.stringify(saveData));
+  } catch (e) {
+    console.error('Failed to save watersort state:', e);
+  }
+}
+
+function clearWatersortSaveState() {
+  const gameType = getGameTypeById('watersort');
+  try {
+    storage.remove(gameType.saveStateStorageKey);
+  } catch (e) {
+    console.error('Failed to clear watersort save state:', e);
+  }
+}
+
+function hasWatersortSaveState() {
+  return loadWatersortSaveState() !== null;
+}
+
+function loadWatersortBestMoves(level) {
+  try {
+    const saved = storage.get(`watersort-best-moves-${level}`);
+    if (saved !== null && saved !== undefined) {
+      return parseInt(saved, 10) || Infinity;
+    }
+  } catch (e) {
+    console.error('Failed to load watersort best moves:', e);
+  }
+  return Infinity;
+}
+
+function saveWatersortBestMoves(level, moves) {
+  try {
+    const currentBest = loadWatersortBestMoves(level);
+    if (moves < currentBest) {
+      storage.set(`watersort-best-moves-${level}`, moves.toString());
+    }
+  } catch (e) {
+    console.error('Failed to save watersort best moves:', e);
+  }
+}
+
 function loadAllGameTypesInfo() {
   const game2048Info = {
     id: '2048',
@@ -182,7 +275,16 @@ function loadAllGameTypesInfo() {
     hasSave: hasPopstarSaveState()
   };
   
-  return [game2048Info, popstarInfo];
+  const watersortInfo = {
+    id: 'watersort',
+    label: '水排序',
+    subtitle: 'WATER SORT',
+    icon: '💧',
+    bestScore: loadWatersortBestScore(),
+    hasSave: hasWatersortSaveState()
+  };
+  
+  return [game2048Info, popstarInfo, watersortInfo];
 }
 
 module.exports = {
@@ -199,5 +301,13 @@ module.exports = {
   savePopstarSaveState,
   clearPopstarSaveState,
   hasPopstarSaveState,
+  loadWatersortBestScore,
+  saveWatersortBestScore,
+  loadWatersortSaveState,
+  saveWatersortSaveState,
+  clearWatersortSaveState,
+  hasWatersortSaveState,
+  loadWatersortBestMoves,
+  saveWatersortBestMoves,
   loadAllGameTypesInfo
 };
