@@ -5,6 +5,7 @@ const { hasPopstarSaveState, hasWatersortSaveState, getAllModesInfo } = require(
 const { Game2048 } = require('./games/game-2048');
 const { GamePopstar } = require('./games/game-popstar');
 const { GameWatersort } = require('./games/game-watersort');
+const { LeaderboardScene } = require('./scenes/leaderboard');
 
 class MiniGames extends BaseGame {
   constructor() {
@@ -13,6 +14,7 @@ class MiniGames extends BaseGame {
     this.game2048 = new Game2048(this);
     this.gamePopstar = new GamePopstar(this);
     this.gameWatersort = new GameWatersort(this);
+    this.leaderboardScene = new LeaderboardScene(this);
     
     this.initHome();
     this.gameLoop();
@@ -38,6 +40,10 @@ class MiniGames extends BaseGame {
   
   enterMode(modeId) {
     this.game2048.enterMode(modeId);
+  }
+  
+  enterLeaderboard() {
+    this.leaderboardScene.initLeaderboard();
   }
   
   goBackHome() {
@@ -94,6 +100,8 @@ class MiniGames extends BaseGame {
       buttonClicked = this.gamePopstar.checkButtonClick(x, y);
     } else if (this.currentScene === SCENE.GAME_WATERSORT) {
       buttonClicked = this.gameWatersort.checkButtonClick(x, y);
+    } else if (this.currentScene === SCENE.LEADERBOARD) {
+      buttonClicked = this.leaderboardScene.checkButtonClick(x, y);
     }
     
     if (buttonClicked) {
@@ -118,6 +126,8 @@ class MiniGames extends BaseGame {
       this.gameWatersort.renderWatersort();
     } else if (this.currentScene === SCENE.WATERSORT_CONFIRM) {
       this.gameWatersort.renderWatersortConfirm();
+    } else if (this.currentScene === SCENE.LEADERBOARD) {
+      this.leaderboardScene.renderLeaderboard();
     }
   }
 }

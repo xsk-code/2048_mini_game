@@ -256,6 +256,34 @@ function saveWatersortBestMoves(level, moves) {
   }
 }
 
+function loadAuthToken() {
+  try {
+    const saved = storage.get('auth_token');
+    if (saved !== null && saved !== undefined) {
+      return saved;
+    }
+  } catch (e) {
+    console.error('Failed to load auth token:', e);
+  }
+  return '';
+}
+
+function saveAuthToken(token) {
+  try {
+    storage.set('auth_token', token);
+  } catch (e) {
+    console.error('Failed to save auth token:', e);
+  }
+}
+
+function clearAuthToken() {
+  try {
+    storage.remove('auth_token');
+  } catch (e) {
+    console.error('Failed to clear auth token:', e);
+  }
+}
+
 function loadAllGameTypesInfo() {
   const game2048Info = {
     id: '2048',
@@ -309,5 +337,8 @@ module.exports = {
   hasWatersortSaveState,
   loadWatersortBestMoves,
   saveWatersortBestMoves,
-  loadAllGameTypesInfo
+  loadAllGameTypesInfo,
+  loadAuthToken,
+  saveAuthToken,
+  clearAuthToken
 };
