@@ -194,9 +194,9 @@ test('isTubeComplete should return true for tube with all same colors', () => {
   assert.equal(isTubeComplete([1, 1, 1, 1]), true);
 });
 
-test('isTubeComplete should return true for partially filled same colors', () => {
-  assert.equal(isTubeComplete([null, 0, 0, 0]), true);
-  assert.equal(isTubeComplete([null, null, 1, 1]), true);
+test('isTubeComplete should return false for partially filled same colors', () => {
+  assert.equal(isTubeComplete([null, 0, 0, 0]), false);
+  assert.equal(isTubeComplete([null, null, 1, 1]), false);
 });
 
 test('isTubeComplete should return false for mixed colors', () => {
