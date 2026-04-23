@@ -12,33 +12,29 @@
 
 ## File Structure
 
-### 后端（Vercel API 项目 — 新建独立仓库/目录）
-
-```
-2048minigame-api/
-├── api/
-│   ├── login.js                 # POST /api/login — 微信登录
-│   ├── user.js                  # POST /api/user — 更新用户信息
-│   ├── score.js                 # POST /api/score — 提交分数
-│   └── leaderboard.js           # GET /api/leaderboard — 获取排行榜
-├── lib/
-│   ├── supabase.js              # Supabase 客户端封装
-│   ├── wechat.js                # 微信 code2Session API 封装
-│   └── auth.js                  # JWT 鉴权中间件
-├── vercel.json
-├── package.json
-└── .gitignore
-```
-
-### 前端（小游戏客户端 — 修改现有项目）
+### 后端（Vercel API — 项目内 `api-server/` 子目录，单仓库管理）
 
 ```
 2048minigame/
-├── api/                         # 新增：API 通信模块
+├── api-server/                  # 后端 API 项目（Vercel 部署此子目录）
+│   ├── api/
+│   │   ├── login.js             # POST /api/login — 微信登录
+│   │   ├── user.js              # POST /api/user — 更新用户信息
+│   │   ├── score.js             # POST /api/score — 提交分数
+│   │   └── leaderboard.js       # GET /api/leaderboard — 获取排行榜
+│   ├── lib/
+│   │   ├── supabase.js          # Supabase 客户端封装
+│   │   ├── wechat.js            # 微信 code2Session API 封装
+│   │   └── auth.js              # JWT 鉴权中间件
+│   ├── vercel.json
+│   ├── package.json
+│   ├── .env                     # 环境变量（已创建，已填入）
+│   └── .gitignore
+├── api/                         # 前端：API 通信模块
 │   ├── client.js                # HTTP 请求封装（wx.request）
 │   ├── auth.js                  # 登录鉴权模块
 │   └── leaderboard.js           # 排行榜 API 封装
-├── scenes/                      # 新增：排行榜场景
+├── scenes/                      # 前端：排行榜场景
 │   └── leaderboard.js           # 排行榜 Canvas 渲染与交互
 ├── common/
 │   └── constants.js             # 修改：新增 SCENE.LEADERBOARD
@@ -142,15 +138,15 @@ JOIN users u ON s.user_id = u.id;
 ### Task 2: 初始化 Vercel API 项目
 
 **Files:**
-- Create: `2048minigame-api/package.json`
-- Create: `2048minigame-api/.gitignore`
-- Create: `2048minigame-api/vercel.json`
+- Create: `api-server/package.json`
+- Create: `api-server/.gitignore`（已创建）
+- Create: `api-server/vercel.json`
+- Create: `api-server/.env`（已创建，已填入）
 
-- [ ] **Step 1: 创建项目目录并初始化**
+- [ ] **Step 1: 初始化 api-server 项目**
 
 ```bash
-mkdir -p 2048minigame-api/api 2048minigame-api/lib
-cd 2048minigame-api
+cd api-server
 npm init -y
 ```
 
@@ -160,8 +156,9 @@ npm init -y
 npm install @supabase/supabase-js jsonwebtoken axios
 ```
 
-- [ ] **Step 3: 创建 .gitignore**
+- [ ] **Step 3: .gitignore 已创建，确认内容**
 
+确认 `api-server/.gitignore` 包含：
 ```gitignore
 node_modules
 .env
@@ -188,23 +185,22 @@ node_modules
 }
 ```
 
-- [ ] **Step 5: 创建 .env 文件（本地开发用，不提交到 Git）**
+- [ ] **Step 5: .env 已创建，确认环境变量已填入**
 
-```env
-WX_APPID=wxe544546395d46864
-WX_SECRET=你的微信AppSecret
-SUPABASE_URL=https://你的项目.supabase.co
-SUPABASE_ANON_KEY=你的anon_key
-SUPABASE_SERVICE_KEY=你的service_role_key
-JWT_SECRET=随机生成的32位字符串
-```
+确认 `api-server/.env` 包含所有必要变量：
+- `WX_APPID`（已填）
+- `WX_SECRET`
+- `SUPABASE_URL`
+- `SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_KEY`
+- `JWT_SECRET`
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git init
-git add .
-git commit -m "chore: init vercel api project"
+cd ..
+git add api-server/
+git commit -m "chore: init api-server project with dependencies"
 ```
 
 ---
@@ -212,7 +208,7 @@ git commit -m "chore: init vercel api project"
 ### Task 3: 实现 Supabase 客户端封装
 
 **Files:**
-- Create: `2048minigame-api/lib/supabase.js`
+- Create: `api-server/lib/supabase.js`
 
 - [ ] **Step 1: 编写 Supabase 客户端**
 
@@ -242,7 +238,7 @@ module.exports = { supabase, supabaseAdmin };
 ### Task 4: 实现微信 API 封装
 
 **Files:**
-- Create: `2048minigame-api/lib/wechat.js`
+- Create: `api-server/lib/wechat.js`
 
 - [ ] **Step 1: 编写 code2Session 函数**
 
@@ -282,7 +278,7 @@ module.exports = { code2Session };
 ### Task 5: 实现 JWT 鉴权中间件
 
 **Files:**
-- Create: `2048minigame-api/lib/auth.js`
+- Create: `api-server/lib/auth.js`
 
 - [ ] **Step 1: 编写 token 验证函数**
 
@@ -322,7 +318,7 @@ module.exports = { verifyToken, generateToken };
 ### Task 6: 实现登录接口
 
 **Files:**
-- Create: `2048minigame-api/api/login.js`
+- Create: `api-server/api/login.js`
 
 - [ ] **Step 1: 编写登录 API**
 
@@ -413,7 +409,7 @@ git commit -m "feat: add login api endpoint"
 ### Task 7: 实现用户信息更新接口
 
 **Files:**
-- Create: `2048minigame-api/api/user.js`
+- Create: `api-server/api/user.js`
 
 - [ ] **Step 1: 编写用户信息更新 API**
 
@@ -495,7 +491,7 @@ git commit -m "feat: add user info update api endpoint"
 ### Task 8: 实现分数提交接口
 
 **Files:**
-- Create: `2048minigame-api/api/score.js`
+- Create: `api-server/api/score.js`
 
 - [ ] **Step 1: 编写分数提交 API**
 
@@ -601,7 +597,7 @@ git commit -m "feat: add score submission api endpoint"
 ### Task 9: 实现排行榜查询接口
 
 **Files:**
-- Create: `2048minigame-api/api/leaderboard.js`
+- Create: `api-server/api/leaderboard.js`
 
 - [ ] **Step 1: 编写排行榜查询 API**
 
@@ -702,12 +698,24 @@ npm i -g vercel
 vercel login
 ```
 
-- [ ] **Step 2: 部署项目**
+- [ ] **Step 2: 部署项目（从 api-server 子目录）**
 
 ```bash
-cd 2048minigame-api
+cd api-server
 vercel --prod
 ```
+
+**重要**：由于后端代码在 `api-server/` 子目录中，Vercel 部署时需要设置 Root Directory。有两种方式：
+
+方式 A（CLI 部署时指定）：
+```bash
+cd api-server
+vercel --prod
+```
+Vercel CLI 会自动检测当前目录为项目根目录。
+
+方式 B（Vercel Dashboard 配置）：
+在项目 Settings → General → Root Directory 中设置为 `api-server`。
 
 记录部署后的 URL，如 `https://2048minigame-api.vercel.app`
 
