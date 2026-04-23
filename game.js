@@ -645,7 +645,7 @@ class Game2048 {
       this.watersortMoves = savedState.moves || 0;
       this.watersortHistory = savedState.history || [];
       this.watersortInitialTubes = savedState.initialTubes || [];
-      this.watersortIsComplete = savedState.isComplete || false;
+      this.watersortIsComplete = isLevelComplete(savedState.tubes);
     } else {
       this.initWatersortGame();
     }

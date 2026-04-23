@@ -113,7 +113,7 @@ function isTubeComplete(tube) {
   if (nonNull.length === TUBE_CAPACITY) {
     return nonNull.every(c => c === nonNull[0]);
   }
-  return nonNull.every(c => c === nonNull[0]);
+  return false;
 }
 
 function isLevelComplete(tubes) {
@@ -158,104 +158,40 @@ function generateLevel(level) {
   const colorCount = getColorCountForLevel(level);
   const tubeCount = getTubeCountForLevel(level);
 
-  let tubes;
-  let attempts = 0;
-  const maxAttempts = 100;
-
-  while (attempts < maxAttempts) {
-    tubes = [];
-    for (let i = 0; i < colorCount; i++) {
-      tubes.push(Array(TUBE_CAPACITY).fill(i));
+  const colors = [];
+  for (let i = 0; i < colorCount; i++) {
+    for (let j = 0; j < TUBE_CAPACITY; j++) {
+      colors.push(i);
     }
-    for (let i = 0; i < tubeCount - colorCount; i++) {
-      tubes.push(Array(TUBE_CAPACITY).fill(null));
-    }
-
-    const shuffleRounds = colorCount * 80;
-    let lastMoveCount = 0;
-    let hasMixedTube = false;
-    
-    for (let round = 0; round < shuffleRounds; round++) {
-      const nonEmpty = [];
-      for (let i = 0; i < tubeCount; i++) {
-        if (getTopColor(tubes[i]) !== null) {
-          nonEmpty.push(i);
-        }
-      }
-      if (nonEmpty.length === 0) break;
-
-      let moveFound = false;
-      for (let attempt = 0; attempt < 15 && !moveFound; attempt++) {
-        const fromIndex = nonEmpty[Math.floor(Math.random() * nonEmpty.length)];
-        const topColor = getTopColor(tubes[fromIndex]);
-
-        const nonEmptyDifferentTopTargets = [];
-        const emptyTargets = [];
-        
-        for (let j = 0; j < tubeCount; j++) {
-          if (j === fromIndex) continue;
-          const toTop = getTopColor(tubes[j]);
-          const toEmpty = getEmptySlotCount(tubes[j]);
-          
-          if (toEmpty > 0) {
-            if (toTop === null) {
-              emptyTargets.push(j);
-            } else if (toTop !== topColor) {
-              nonEmptyDifferentTopTargets.push(j);
-            }
-          }
-        }
-
-        let toIndex;
-        
-        if (!hasMixedTube && nonEmptyDifferentTopTargets.length > 0) {
-          toIndex = nonEmptyDifferentTopTargets[Math.floor(Math.random() * nonEmptyDifferentTopTargets.length)];
-          hasMixedTube = true;
-        } else if (nonEmptyDifferentTopTargets.length > 0 && Math.random() < 0.5) {
-          toIndex = nonEmptyDifferentTopTargets[Math.floor(Math.random() * nonEmptyDifferentTopTargets.length)];
-        } else if (emptyTargets.length > 0) {
-          toIndex = emptyTargets[Math.floor(Math.random() * emptyTargets.length)];
-        } else if (nonEmptyDifferentTopTargets.length > 0) {
-          toIndex = nonEmptyDifferentTopTargets[Math.floor(Math.random() * nonEmptyDifferentTopTargets.length)];
-        } else {
-          continue;
-        }
-
-        const result = pour(tubes[fromIndex], tubes[toIndex]);
-        
-        if (result.count > 0) {
-          tubes[fromIndex] = result.newFrom;
-          tubes[toIndex] = result.newTo;
-          moveFound = true;
-          lastMoveCount++;
-        }
-      }
-    }
-
-    if (!isLevelComplete(tubes) && lastMoveCount > 0) {
-      break;
-    }
-    attempts++;
   }
 
-  if (attempts >= maxAttempts) {
-    tubes = [];
-    for (let i = 0; i < colorCount; i++) {
-      tubes.push(Array(TUBE_CAPACITY).fill(i));
+  for (let i = colors.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [colors[i], colors[j]] = [colors[j], colors[i]];
+  }
+
+  const tubes = [];
+  let colorIndex = 0;
+
+  for (let i = 0; i < tubeCount - EMPTY_TUBES; i++) {
+    const tube = [];
+    for (let j = 0; j < TUBE_CAPACITY; j++) {
+      tube.push(colors[colorIndex++]);
     }
-    for (let i = 0; i < tubeCount - colorCount; i++) {
-      tubes.push(Array(TUBE_CAPACITY).fill(null));
-    }
-    
-    if (colorCount >= 2) {
-      let result = pour(tubes[0], tubes[colorCount]);
-      tubes[0] = result.newFrom;
-      tubes[colorCount] = result.newTo;
-      
-      result = pour(tubes[1], tubes[colorCount]);
-      tubes[1] = result.newFrom;
-      tubes[colorCount] = result.newTo;
-    }
+    tubes.push(tube);
+  }
+
+  for (let i = 0; i < EMPTY_TUBES; i++) {
+    tubes.push(Array(TUBE_CAPACITY).fill(null));
+  }
+
+  if (isLevelComplete(tubes)) {
+    const tube0TopIdx = tubes[0].lastIndexOf(tubes[0].filter(c => c !== null)[0] || 0);
+    const tube1TopIdx = tubes[1].lastIndexOf(tubes[1].filter(c => c !== null)[0] || 0);
+    const tube0Top = tubes[0][tube0TopIdx];
+    const tube1Top = tubes[1][tube1TopIdx];
+    tubes[0][tube0TopIdx] = tube1Top;
+    tubes[1][tube1TopIdx] = tube0Top;
   }
 
   const initialTubes = cloneTubes(tubes);
