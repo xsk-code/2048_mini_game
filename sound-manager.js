@@ -7,13 +7,7 @@ const SOUND_CONFIG = {
   popstar_gameover: 'audio/popstar_gameover.mp3',
   merge_2048: 'audio/merge_2048.mp3',
   gameover_2048: 'audio/gameover_2048.mp3',
-  button_click: 'audio/button_click.mp3',
-  watersort_select: 'audio/watersort_select.mp3',
-  watersort_pour: 'audio/watersort_pour.mp3',
-  watersort_invalid: 'audio/watersort_invalid.mp3',
-  watersort_complete: 'audio/watersort_complete.mp3',
-  watersort_levelclear: 'audio/watersort_levelclear.mp3',
-  watersort_undo: 'audio/watersort_undo.mp3'
+  button_click: 'audio/button_click.mp3'
 };
 
 function isWeChatEnvironment() {
@@ -152,30 +146,6 @@ class SoundManager {
 
   playButtonClick() {
     this.play('button_click', { volume: 0.7 });
-  }
-
-  playWatersortSelect() {
-    this.play('watersort_select', { volume: 0.6 });
-  }
-
-  playWatersortPour() {
-    this.play('watersort_pour', { volume: 0.7 });
-  }
-
-  playWatersortInvalid() {
-    this.play('watersort_invalid', { volume: 0.5 });
-  }
-
-  playWatersortComplete() {
-    this.play('watersort_complete', { volume: 0.8 });
-  }
-
-  playWatersortLevelClear() {
-    this.play('watersort_levelclear', { volume: 1.0 });
-  }
-
-  playWatersortUndo() {
-    this.play('watersort_undo', { volume: 0.5 });
   }
 
   toggle() {
