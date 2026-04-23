@@ -105,6 +105,33 @@ test('getTopConsecutiveCount should count consecutive same colors from top', () 
   assert.equal(getTopConsecutiveCount(tube4), 2);
 });
 
+test('getTopConsecutiveCount should skip null slots at top and count correctly', () => {
+  const tube1 = [1, 1, null, null];
+  assert.equal(getTopColor(tube1), 1);
+  assert.equal(getTopConsecutiveCount(tube1), 2);
+  
+  const tube2 = [1, null, null, null];
+  assert.equal(getTopColor(tube2), 1);
+  assert.equal(getTopConsecutiveCount(tube2), 1);
+  
+  const tube3 = [0, 1, 1, null];
+  assert.equal(getTopColor(tube3), 1);
+  assert.equal(getTopConsecutiveCount(tube3), 2);
+});
+
+test('pour should work correctly when target tube has null slots at top', () => {
+  const from = [2, 2, 1, 1];
+  const to = [1, 1, null, null];
+  
+  assert.equal(canPour(from, to), true);
+  
+  const result = pour(from, to);
+  
+  assert.deepEqual(result.newFrom, [2, 2, null, null]);
+  assert.deepEqual(result.newTo, [1, 1, 1, 1]);
+  assert.equal(result.count, 2);
+});
+
 test('getEmptySlotCount should return correct count', () => {
   assert.equal(getEmptySlotCount([null, null, null, null]), 4);
   assert.equal(getEmptySlotCount([0, null, null, null]), 3);

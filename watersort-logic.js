@@ -63,9 +63,14 @@ function getTopConsecutiveCount(tube) {
   const topColor = getTopColor(tube);
   if (topColor === null) return 0;
   let count = 0;
+  let startedCounting = false;
   for (let i = tube.length - 1; i >= 0; i--) {
-    if (tube[i] === topColor) count++;
-    else break;
+    if (tube[i] === topColor) {
+      count++;
+      startedCounting = true;
+    } else if (startedCounting) {
+      break;
+    }
   }
   return count;
 }
