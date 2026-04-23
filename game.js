@@ -1336,15 +1336,23 @@ class Game2048 {
     const liquidColors = theme.watersortLiquids;
     let hasLiquid = false;
     
-    for (let layer = TUBE_CAPACITY - 1; layer >= 0; layer--) {
+    let topMostIndex = -1;
+    for (let i = tube.length - 1; i >= 0; i--) {
+      if (tube[i] !== null) {
+        topMostIndex = i;
+        break;
+      }
+    }
+    
+    for (let layer = 0; layer < TUBE_CAPACITY; layer++) {
       const colorIndex = tube[layer];
       if (colorIndex === null) continue;
       
       hasLiquid = true;
-      const liquidY = baseY + tubeHeight - this.rpx(8) - (TUBE_CAPACITY - layer) * liquidHeight;
+      const liquidY = baseY + tubeHeight - this.rpx(8) - (layer + 1) * liquidHeight;
       const color = liquidColors[colorIndex] || liquidColors[0];
       
-      const isTopLayer = layer === tube.findIndex((c, i) => c !== null && tube.slice(i + 1).every(n => n === null || n === c));
+      const isTopLayer = layer === topMostIndex;
       
       ctx.beginPath();
       
