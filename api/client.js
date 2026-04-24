@@ -1,4 +1,4 @@
-var BASE_URL = 'https://你的域名.vercel.app/api';
+var BASE_URL = 'https://api-server-ochre.vercel.app/api';
 
 function request(path, options) {
   options = options || {};
