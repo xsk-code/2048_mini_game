@@ -14,6 +14,10 @@ class BaseGame {
     this.screenWidth = this.systemInfo.screenWidth;
     this.screenHeight = this.systemInfo.screenHeight;
     
+    this.safeArea = this.systemInfo.safeArea || { top: 0, bottom: this.screenHeight, height: this.screenHeight };
+    this.statusBarHeight = this.systemInfo.statusBarHeight || 0;
+    this.menuButtonRect = wx.getMenuButtonBoundingClientRect ? wx.getMenuButtonBoundingClientRect() : null;
+    
     this.canvas.width = this.screenWidth * this.dpr;
     this.canvas.height = this.screenHeight * this.dpr;
     this.ctx.scale(this.dpr, this.dpr);
@@ -427,12 +431,22 @@ class BaseGame {
     ctx.fillText('←', backBtnX + backBtnSize / 2, backBtnY + backBtnSize / 2);
   }
   
+  getSafeTopPadding() {
+    if (this.menuButtonRect) {
+      return this.menuButtonRect.bottom + this.rpx(16);
+    }
+    if (this.safeArea && this.safeArea.top > 0) {
+      return this.safeArea.top + this.rpx(24);
+    }
+    return this.statusBarHeight + this.rpx(32);
+  }
+
   drawLeaderboardButton() {
     const theme = this.theme;
     const ctx = this.ctx;
 
     const btnX = this.gameX + this.gameWidth - this.leaderboardBtnSize;
-    const btnY = this.homeTitleY - this.rpx(40);
+    const btnY = this.safeArea.bottom - this.leaderboardBtnSize - this.rpx(24);
 
     ctx.shadowColor = this.isDark ? 'rgba(0, 0, 0, 0.25)' : 'rgba(0, 0, 0, 0.06)';
     ctx.shadowBlur = this.isDark ? this.rpx(10) : this.rpx(6);
