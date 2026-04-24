@@ -52,10 +52,23 @@ function logout() {
   currentUser = null;
 }
 
+function updateUserInfo(newInfo) {
+  return request('/user', {
+    method: 'POST',
+    data: newInfo
+  }).then(function (result) {
+    if (result.success && result.userInfo) {
+      currentUser = Object.assign({}, currentUser, result.userInfo);
+    }
+    return result;
+  });
+}
+
 module.exports = {
   login: login,
   ensureLogin: ensureLogin,
   getCurrentUser: getCurrentUser,
   isLoggedIn: isLoggedIn,
-  logout: logout
+  logout: logout,
+  updateUserInfo: updateUserInfo
 };
