@@ -323,50 +323,40 @@ LeaderboardScene.prototype.drawMyRank = function () {
   var user = getCurrentUser() || {};
   var nickname = user.nickname || '玩家';
 
-  if (!this.myRank) {
-    ctx.fillStyle = theme.scoreLabel;
-    ctx.font = Math.round(base.rpx(16)) + 'px system-ui';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('MY RANK', cardX + base.rpx(24), cardY + base.rpx(36));
-
-    ctx.fillStyle = theme.subtitleText;
-    ctx.font = Math.round(base.rpx(20)) + 'px system-ui';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('暂无排名', cardX + base.rpx(24), cardY + base.rpx(72));
-
-    this.drawNicknameWithEditButton(cardX, cardY, cardWidth, cardHeight, nickname, theme, base, ctx);
-    return;
-  }
-
   ctx.fillStyle = theme.scoreLabel;
   ctx.font = Math.round(base.rpx(16)) + 'px system-ui';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
-  ctx.fillText('MY RANK', cardX + base.rpx(24), cardY + base.rpx(36));
+  ctx.fillText('MY RANK', cardX + base.rpx(24), cardY + base.rpx(32));
 
-  ctx.fillStyle = theme.titleText;
-  ctx.font = 'bold ' + Math.round(base.rpx(32)) + 'px system-ui';
-  ctx.fillText('#' + this.myRank.rank, cardX + base.rpx(24), cardY + base.rpx(72));
+  if (this.myRank) {
+    ctx.fillStyle = theme.titleText;
+    ctx.font = 'bold ' + Math.round(base.rpx(32)) + 'px system-ui';
+    ctx.fillText('#' + this.myRank.rank, cardX + base.rpx(24), cardY + base.rpx(76));
 
-  ctx.fillStyle = theme.scoreValue;
-  ctx.font = 'bold ' + Math.round(base.rpx(28)) + 'px system-ui';
-  ctx.textAlign = 'right';
-  ctx.fillText(this.myRank.score.toString(), cardX + cardWidth - base.rpx(24), cardY + cardHeight / 2);
+    ctx.fillStyle = theme.scoreValue;
+    ctx.font = 'bold ' + Math.round(base.rpx(26)) + 'px system-ui';
+    ctx.textAlign = 'right';
+    ctx.fillText(this.myRank.score.toString(), cardX + cardWidth - base.rpx(24), cardY + base.rpx(52));
+  } else {
+    ctx.fillStyle = theme.subtitleText;
+    ctx.font = Math.round(base.rpx(20)) + 'px system-ui';
+    ctx.fillText('暂无排名', cardX + base.rpx(24), cardY + base.rpx(76));
+  }
 
   this.drawNicknameWithEditButton(cardX, cardY, cardWidth, cardHeight, nickname, theme, base, ctx);
 };
 
 LeaderboardScene.prototype.drawNicknameWithEditButton = function (cardX, cardY, cardWidth, cardHeight, nickname, theme, base, ctx) {
-  var maxNicknameWidth = cardWidth - base.rpx(160);
-  var editBtnSize = base.rpx(40);
-  var editBtnX = cardX + cardWidth - base.rpx(100);
-  var editBtnY = cardY + cardHeight / 2 - editBtnSize / 2;
+  var nicknameStartX = cardX + cardWidth - base.rpx(180);
+  var maxNicknameWidth = base.rpx(100);
+  var editBtnSize = base.rpx(32);
+  var editBtnX = cardX + cardWidth - base.rpx(24) - editBtnSize;
+  var editBtnY = cardY + base.rpx(76) - editBtnSize / 2;
 
   ctx.fillStyle = theme.titleText;
-  ctx.font = Math.round(base.rpx(22)) + 'px system-ui';
-  ctx.textAlign = 'left';
+  ctx.font = Math.round(base.rpx(20)) + 'px system-ui';
+  ctx.textAlign = 'right';
   ctx.textBaseline = 'middle';
 
   var displayNickname = nickname;
@@ -379,17 +369,18 @@ LeaderboardScene.prototype.drawNicknameWithEditButton = function (cardX, cardY, 
     displayNickname = displayNickname + ellipsis;
   }
 
-  ctx.fillText(displayNickname, cardX + base.rpx(120), cardY + cardHeight / 2);
+  var nicknameX = nicknameStartX + maxNicknameWidth;
+  ctx.fillText(displayNickname, nicknameX, cardY + base.rpx(76));
 
   ctx.fillStyle = theme.themeBtnBg;
   base.drawRoundedRect(editBtnX, editBtnY, editBtnSize, editBtnSize, Math.round(editBtnSize / 2));
   ctx.fill();
 
   ctx.fillStyle = theme.titleText;
-  ctx.font = Math.round(base.rpx(20)) + 'px system-ui';
+  ctx.font = Math.round(base.rpx(14)) + 'px system-ui';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText('✏️', editBtnX + editBtnSize / 2, editBtnY + editBtnSize / 2);
+  ctx.fillText('⋯', editBtnX + editBtnSize / 2, editBtnY + editBtnSize / 2);
 
   this.editNicknameButton = {
     x: editBtnX,
