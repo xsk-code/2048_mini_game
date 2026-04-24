@@ -1,8 +1,10 @@
-const { SCENE } = require('../common/constants');
+const { SCENE, GAME_TYPE_MAP } = require('../common/constants');
 const { getTheme } = require('../common/themes');
 const { getModeById, getModesByGameType } = require('../mode-config');
 const { canBoardMove, createEmptyBoard } = require('../game-logic');
 const { loadBestScore, saveBestScore, loadSaveState, saveSaveState, hasSaveState, loadAllModesInfo } = require('../storage');
+const { ensureLogin } = require('../api/auth');
+const { submitScore } = require('../api/leaderboard');
 
 class Game2048 {
   constructor(baseGame) {
@@ -343,6 +345,7 @@ class Game2048 {
         if (!this.canMove()) {
           this.isGameOver = true;
           this.base.soundManager.play2048GameOver();
+          this.submitScoreToServer();
         }
         this.isMoving = false;
       }, 160);
@@ -371,6 +374,22 @@ class Game2048 {
         tileId: this.tileId
       });
     }
+  }
+
+  submitScoreToServer() {
+    if (!this.currentMode) return;
+    const gameType = GAME_TYPE_MAP[this.currentMode.id];
+    if (!gameType) return;
+
+    ensureLogin().then(() => {
+      return submitScore(gameType, this.score);
+    }).then((result) => {
+      if (result.success) {
+        console.log('Score submitted. Best: ' + result.bestScore + ', Rank: ' + result.rank);
+      }
+    }).catch((err) => {
+      console.error('Failed to submit score:', err);
+    });
   }
   
   getTilePosition(x, y) {

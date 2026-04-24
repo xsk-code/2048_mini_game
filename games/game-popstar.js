@@ -2,6 +2,8 @@ const { SCENE } = require('../common/constants');
 const { getTheme } = require('../common/themes');
 const { POPSTAR_GRID_SIZE, getColorCount, createBoard, findConnected, hasValidMoves, calculateScore, calculateBonus, getTargetScore, countRemainingStars, isBoardFull, processElimination } = require('../popstar-logic');
 const { loadPopstarBestScore, savePopstarBestScore, loadPopstarSaveState, savePopstarSaveState, clearPopstarSaveState, hasPopstarSaveState } = require('../storage');
+const { ensureLogin } = require('../api/auth');
+const { submitScore } = require('../api/leaderboard');
 
 class GamePopstar {
   constructor(baseGame) {
@@ -122,6 +124,18 @@ class GamePopstar {
       });
     }
   }
+
+  submitScoreToServer() {
+    ensureLogin().then(() => {
+      return submitScore('popstar', this.popstarTotalScore);
+    }).then((result) => {
+      if (result.success) {
+        console.log('Popstar score submitted. Best: ' + result.bestScore + ', Rank: ' + result.rank);
+      }
+    }).catch((err) => {
+      console.error('Failed to submit popstar score:', err);
+    });
+  }
   
   handlePopstarTouchStart(x, y) {
     const cellX = Math.floor((x - this.base.boardX - this.base.popstarCellGap) / (this.popstarCellSize + this.base.popstarCellGap));
@@ -195,6 +209,7 @@ class GamePopstar {
       } else {
         this.popstarIsGameOver = true;
         this.base.soundManager.playPopstarGameOver();
+        this.submitScoreToServer();
       }
       
       this.savePopstarCurrentState();
