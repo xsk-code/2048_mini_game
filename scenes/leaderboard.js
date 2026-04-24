@@ -1,7 +1,7 @@
 var { SCENE, GAME_TYPE_MAP } = require('../common/constants');
 var { getTheme } = require('../common/themes');
 var { getLeaderboard } = require('../api/leaderboard');
-var { isLoggedIn, getCurrentUser, ensureLogin } = require('../api/auth');
+var { isLoggedIn, getCurrentUser, ensureLogin, updateUserInfo } = require('../api/auth');
 
 var LEADERBOARD_TABS = [
   { key: '2048-4x4', label: '4×4' },
@@ -24,6 +24,7 @@ function LeaderboardScene(baseGame) {
   this.tabButtons = [];
   this.backButton = null;
   this.refreshButton = null;
+  this.editNicknameButton = null;
 }
 
 LeaderboardScene.prototype.initLeaderboard = function () {
@@ -308,6 +309,8 @@ LeaderboardScene.prototype.drawMyRank = function () {
   ctx.shadowBlur = 0;
   ctx.shadowOffsetY = 0;
 
+  this.editNicknameButton = null;
+
   if (!isLoggedIn()) {
     ctx.fillStyle = theme.subtitleText;
     ctx.font = Math.round(base.rpx(22)) + 'px system-ui';
@@ -317,16 +320,26 @@ LeaderboardScene.prototype.drawMyRank = function () {
     return;
   }
 
+  var user = getCurrentUser() || {};
+  var nickname = user.nickname || '玩家';
+
   if (!this.myRank) {
-    ctx.fillStyle = theme.subtitleText;
-    ctx.font = Math.round(base.rpx(22)) + 'px system-ui';
-    ctx.textAlign = 'center';
+    ctx.fillStyle = theme.scoreLabel;
+    ctx.font = Math.round(base.rpx(16)) + 'px system-ui';
+    ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
-    ctx.fillText('暂无排名', cardX + cardWidth / 2, cardY + cardHeight / 2);
+    ctx.fillText('MY RANK', cardX + base.rpx(24), cardY + base.rpx(36));
+
+    ctx.fillStyle = theme.subtitleText;
+    ctx.font = Math.round(base.rpx(20)) + 'px system-ui';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('暂无排名', cardX + base.rpx(24), cardY + base.rpx(72));
+
+    this.drawNicknameWithEditButton(cardX, cardY, cardWidth, cardHeight, nickname, theme, base, ctx);
     return;
   }
 
-  var user = getCurrentUser() || {};
   ctx.fillStyle = theme.scoreLabel;
   ctx.font = Math.round(base.rpx(16)) + 'px system-ui';
   ctx.textAlign = 'left';
@@ -341,6 +354,49 @@ LeaderboardScene.prototype.drawMyRank = function () {
   ctx.font = 'bold ' + Math.round(base.rpx(28)) + 'px system-ui';
   ctx.textAlign = 'right';
   ctx.fillText(this.myRank.score.toString(), cardX + cardWidth - base.rpx(24), cardY + cardHeight / 2);
+
+  this.drawNicknameWithEditButton(cardX, cardY, cardWidth, cardHeight, nickname, theme, base, ctx);
+};
+
+LeaderboardScene.prototype.drawNicknameWithEditButton = function (cardX, cardY, cardWidth, cardHeight, nickname, theme, base, ctx) {
+  var maxNicknameWidth = cardWidth - base.rpx(160);
+  var editBtnSize = base.rpx(40);
+  var editBtnX = cardX + cardWidth - base.rpx(100);
+  var editBtnY = cardY + cardHeight / 2 - editBtnSize / 2;
+
+  ctx.fillStyle = theme.titleText;
+  ctx.font = Math.round(base.rpx(22)) + 'px system-ui';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+
+  var displayNickname = nickname;
+  if (ctx.measureText(displayNickname).width > maxNicknameWidth) {
+    var ellipsis = '...';
+    var ellipsisWidth = ctx.measureText(ellipsis).width;
+    while (displayNickname.length > 0 && ctx.measureText(displayNickname).width + ellipsisWidth > maxNicknameWidth) {
+      displayNickname = displayNickname.slice(0, -1);
+    }
+    displayNickname = displayNickname + ellipsis;
+  }
+
+  ctx.fillText(displayNickname, cardX + base.rpx(120), cardY + cardHeight / 2);
+
+  ctx.fillStyle = theme.themeBtnBg;
+  base.drawRoundedRect(editBtnX, editBtnY, editBtnSize, editBtnSize, Math.round(editBtnSize / 2));
+  ctx.fill();
+
+  ctx.fillStyle = theme.titleText;
+  ctx.font = Math.round(base.rpx(20)) + 'px system-ui';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('✏️', editBtnX + editBtnSize / 2, editBtnY + editBtnSize / 2);
+
+  this.editNicknameButton = {
+    x: editBtnX,
+    y: editBtnY,
+    width: editBtnSize,
+    height: editBtnSize
+  };
 };
 
 LeaderboardScene.prototype.checkButtonClick = function (x, y) {
@@ -384,7 +440,83 @@ LeaderboardScene.prototype.checkButtonClick = function (x, y) {
     }
   }
 
+  if (this.editNicknameButton) {
+    if (x >= this.editNicknameButton.x && x <= this.editNicknameButton.x + this.editNicknameButton.width &&
+        y >= this.editNicknameButton.y && y <= this.editNicknameButton.y + this.editNicknameButton.height) {
+      this.showNicknameEditDialog();
+      return true;
+    }
+  }
+
   return false;
+};
+
+LeaderboardScene.prototype.showNicknameEditDialog = function () {
+  var self = this;
+  var currentUser = getCurrentUser() || {};
+  var currentNickname = currentUser.nickname || '玩家';
+
+  wx.showModal({
+    title: '修改昵称',
+    editable: true,
+    placeholderText: '请输入新昵称',
+    content: '',
+    defaultValue: currentNickname,
+    success: function (res) {
+      if (res.confirm) {
+        var newNickname = res.content || res.inputValue;
+        if (newNickname && newNickname.trim() && newNickname.trim().length > 0) {
+          newNickname = newNickname.trim();
+          if (newNickname.length > 64) {
+            wx.showToast({
+              title: '昵称不能超过64个字符',
+              icon: 'none',
+              duration: 2000
+            });
+            return;
+          }
+          self.submitNicknameChange(newNickname);
+        } else {
+          wx.showToast({
+            title: '昵称不能为空',
+            icon: 'none',
+            duration: 2000
+          });
+        }
+      }
+    }
+  });
+};
+
+LeaderboardScene.prototype.submitNicknameChange = function (newNickname) {
+  var self = this;
+  wx.showLoading({ title: '更新中...' });
+
+  updateUserInfo({ nickname: newNickname }).then(function (result) {
+    wx.hideLoading();
+    if (result.success) {
+      wx.showToast({
+        title: '修改成功',
+        icon: 'success',
+        duration: 1500
+      });
+      self.fetchLeaderboard();
+    } else {
+      wx.showToast({
+        title: result.error || '修改失败',
+        icon: 'none',
+        duration: 2000
+      });
+    }
+  }).catch(function (err) {
+    wx.hideLoading();
+    console.error('Failed to update nickname:', err);
+    wx.showToast({
+      title: err.message || '网络错误',
+      icon: 'none',
+      duration: 2000
+    });
+  });
 };
 
 module.exports = { LeaderboardScene: LeaderboardScene };
