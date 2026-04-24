@@ -12,6 +12,8 @@ const MAX_SCORES = {
 };
 
 module.exports = async (req, res) => {
+  console.log('Score API called');
+  
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
@@ -20,11 +22,14 @@ module.exports = async (req, res) => {
   }
 
   const user = verifyToken(req);
+  console.log('Verified user:', user);
+  
   if (!user) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
   const { gameType, score } = req.body || {};
+  console.log('gameType:', gameType, 'score:', score);
 
   if (!VALID_GAME_TYPES.includes(gameType)) {
     return res.status(400).json({ error: 'Invalid game type' });
@@ -40,7 +45,8 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const { data: existing } = await supabaseAdmin
+    console.log('Querying existing scores for user:', user.userId);
+    const { data: existing, error: existingError } = await supabaseAdmin
       .from('scores')
       .select('score')
       .eq('user_id', user.userId)
@@ -48,6 +54,10 @@ module.exports = async (req, res) => {
       .order('score', { ascending: false })
       .limit(1);
 
+    console.log('Existing scores error:', existingError);
+    console.log('Existing scores:', existing);
+
+    console.log('Inserting new score...');
     const { data: inserted, error: insertError } = await supabaseAdmin
       .from('scores')
       .insert({
@@ -58,22 +68,31 @@ module.exports = async (req, res) => {
       .select()
       .single();
 
+    console.log('Insert error:', insertError);
+    console.log('Inserted data:', inserted);
+
     if (insertError) {
       console.error('Score insert error:', insertError);
-      return res.status(500).json({ error: 'Failed to submit score' });
+      return res.status(500).json({ error: 'Failed to submit score: ' + insertError.message });
     }
 
     const bestScore = existing && existing.length > 0
       ? Math.max(existing[0].score, score)
       : score;
+    console.log('Best score:', bestScore);
 
+    console.log('Calculating rank...');
     const { count, error: rankError } = await supabaseAdmin
       .from('scores')
       .select('*', { count: 'exact', head: true })
       .eq('game_type', gameType)
       .gt('score', bestScore);
 
+    console.log('Rank count error:', rankError);
+    console.log('Rank count:', count);
+
     const rank = (count || 0) + 1;
+    console.log('Final rank:', rank);
 
     return res.status(200).json({
       success: true,
@@ -81,7 +100,8 @@ module.exports = async (req, res) => {
       rank
     });
   } catch (err) {
-    console.error('Score submit error:', err.message);
-    return res.status(500).json({ error: 'Failed to submit score' });
+    console.error('Score submit unexpected error:', err);
+    console.error('Error stack:', err.stack);
+    return res.status(500).json({ error: 'Failed to submit score: ' + err.message });
   }
 };
