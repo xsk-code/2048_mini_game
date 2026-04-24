@@ -2,6 +2,8 @@ const { SCENE } = require('../common/constants');
 const { getTheme } = require('../common/themes');
 const { TUBE_CAPACITY, MAX_LEVEL, getTopColor, canPour, pour, isTubeComplete, isLevelComplete, cloneTubes, undoMove, resetLevel, generateLevel } = require('../watersort-logic');
 const { loadWatersortBestScore, saveWatersortBestScore, loadWatersortSaveState, saveWatersortSaveState, clearWatersortSaveState, hasWatersortSaveState, loadWatersortBestMoves, saveWatersortBestMoves } = require('../storage');
+const { ensureLogin } = require('../api/auth');
+const { submitScore } = require('../api/leaderboard');
 
 class GameWatersort {
   constructor(baseGame) {
@@ -128,6 +130,18 @@ class GameWatersort {
         isComplete: this.watersortIsComplete
       });
     }
+  }
+
+  submitScoreToServer() {
+    ensureLogin().then(() => {
+      return submitScore('watersort', this.watersortLevel);
+    }).then((result) => {
+      if (result.success) {
+        console.log('Watersort score submitted. Best: ' + result.bestScore + ', Rank: ' + result.rank);
+      }
+    }).catch((err) => {
+      console.error('Failed to submit watersort score:', err);
+    });
   }
   
   recalculateWatersortLayout() {
@@ -831,6 +845,7 @@ class GameWatersort {
               }
               
               this.saveWatersortCurrentState();
+              this.submitScoreToServer();
             }
             
             this.watersortSelectedTube = null;
