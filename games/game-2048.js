@@ -381,8 +381,11 @@ class Game2048 {
     const gameType = GAME_TYPE_MAP[this.currentMode.id];
     if (!gameType) return;
 
+    const currentScore = this.score;
+    console.log('Submitting score to server:', currentScore, 'gameType:', gameType);
+
     ensureLogin().then(() => {
-      return submitScore(gameType, this.score);
+      return submitScore(gameType, currentScore);
     }).then((result) => {
       if (result.success) {
         console.log('Score submitted. Best: ' + result.bestScore + ', Rank: ' + result.rank);
