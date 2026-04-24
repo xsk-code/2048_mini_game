@@ -1,4 +1,4 @@
-var BASE_URL = 'https://2048-mini-game-3ykg.vercel.app/api';
+var BASE_URL = 'https://2048minigame.vercel.app/api';
 
 function request(path, options) {
   options = options || {};
