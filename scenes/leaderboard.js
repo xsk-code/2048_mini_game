@@ -293,7 +293,7 @@ LeaderboardScene.prototype.drawMyRank = function () {
   var cardX = base.gameX;
   var cardY = this.myRankCardY;
   var cardWidth = base.gameWidth;
-  var cardHeight = base.rpx(120);
+  var cardHeight = base.rpx(96);
 
   ctx.shadowColor = base.isDark ? 'rgba(0,0,0,0.25)' : 'rgba(0,0,0,0.06)';
   ctx.shadowBlur = base.isDark ? base.rpx(10) : base.rpx(6);
@@ -322,40 +322,42 @@ LeaderboardScene.prototype.drawMyRank = function () {
 
   var user = getCurrentUser() || {};
   var nickname = user.nickname || '玩家';
+  var centerY = cardY + cardHeight / 2;
 
-  ctx.fillStyle = theme.scoreLabel;
-  ctx.font = Math.round(base.rpx(16)) + 'px system-ui';
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('MY RANK', cardX + base.rpx(24), cardY + base.rpx(32));
+  var rankStartX = cardX + base.rpx(24);
+  var scoreEndX = cardX + cardWidth - base.rpx(24);
 
   if (this.myRank) {
     ctx.fillStyle = theme.titleText;
-    ctx.font = 'bold ' + Math.round(base.rpx(32)) + 'px system-ui';
-    ctx.fillText('#' + this.myRank.rank, cardX + base.rpx(24), cardY + base.rpx(76));
+    ctx.font = 'bold ' + Math.round(base.rpx(28)) + 'px system-ui';
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('#' + this.myRank.rank, rankStartX, centerY);
 
     ctx.fillStyle = theme.scoreValue;
-    ctx.font = 'bold ' + Math.round(base.rpx(26)) + 'px system-ui';
+    ctx.font = 'bold ' + Math.round(base.rpx(28)) + 'px system-ui';
     ctx.textAlign = 'right';
-    ctx.fillText(this.myRank.score.toString(), cardX + cardWidth - base.rpx(24), cardY + base.rpx(52));
+    ctx.fillText(this.myRank.score.toString(), scoreEndX, centerY);
   } else {
     ctx.fillStyle = theme.subtitleText;
     ctx.font = Math.round(base.rpx(20)) + 'px system-ui';
-    ctx.fillText('暂无排名', cardX + base.rpx(24), cardY + base.rpx(76));
+    ctx.textAlign = 'left';
+    ctx.fillText('暂无排名', rankStartX, centerY);
   }
 
-  this.drawNicknameWithEditButton(cardX, cardY, cardWidth, cardHeight, nickname, theme, base, ctx);
+  this.drawNicknameWithEditButton(cardX, centerY, cardWidth, nickname, theme, base, ctx);
 };
 
-LeaderboardScene.prototype.drawNicknameWithEditButton = function (cardX, cardY, cardWidth, cardHeight, nickname, theme, base, ctx) {
-  var nicknameStartX = cardX + cardWidth - base.rpx(180);
-  var maxNicknameWidth = base.rpx(100);
-  var editBtnSize = base.rpx(32);
-  var editBtnX = cardX + cardWidth - base.rpx(24) - editBtnSize;
-  var editBtnY = cardY + base.rpx(76) - editBtnSize / 2;
+LeaderboardScene.prototype.drawNicknameWithEditButton = function (cardX, centerY, cardWidth, nickname, theme, base, ctx) {
+  var editBtnSize = base.rpx(36);
+  var editBtnX = cardX + cardWidth - base.rpx(100);
+  var editBtnY = centerY - editBtnSize / 2;
+
+  var maxNicknameWidth = base.rpx(120);
+  var nicknameEndX = editBtnX - base.rpx(8);
 
   ctx.fillStyle = theme.titleText;
-  ctx.font = Math.round(base.rpx(20)) + 'px system-ui';
+  ctx.font = Math.round(base.rpx(22)) + 'px system-ui';
   ctx.textAlign = 'right';
   ctx.textBaseline = 'middle';
 
@@ -369,18 +371,17 @@ LeaderboardScene.prototype.drawNicknameWithEditButton = function (cardX, cardY, 
     displayNickname = displayNickname + ellipsis;
   }
 
-  var nicknameX = nicknameStartX + maxNicknameWidth;
-  ctx.fillText(displayNickname, nicknameX, cardY + base.rpx(76));
+  ctx.fillText(displayNickname, nicknameEndX, centerY);
 
   ctx.fillStyle = theme.themeBtnBg;
   base.drawRoundedRect(editBtnX, editBtnY, editBtnSize, editBtnSize, Math.round(editBtnSize / 2));
   ctx.fill();
 
   ctx.fillStyle = theme.titleText;
-  ctx.font = Math.round(base.rpx(14)) + 'px system-ui';
+  ctx.font = Math.round(base.rpx(16)) + 'px system-ui';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText('⋯', editBtnX + editBtnSize / 2, editBtnY + editBtnSize / 2);
+  ctx.fillText('✎', editBtnX + editBtnSize / 2, editBtnY + editBtnSize / 2);
 
   this.editNicknameButton = {
     x: editBtnX,
