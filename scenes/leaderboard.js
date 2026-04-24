@@ -36,17 +36,29 @@ LeaderboardScene.prototype.initLeaderboard = function () {
   this.fetchLeaderboard();
 };
 
+LeaderboardScene.prototype.getSafeTopPadding = function () {
+  var base = this.base;
+  if (base.menuButtonRect) {
+    return base.menuButtonRect.bottom + base.rpx(16);
+  }
+  if (base.safeArea && base.safeArea.top > 0) {
+    return base.safeArea.top + base.rpx(24);
+  }
+  return base.statusBarHeight + base.rpx(32);
+};
+
 LeaderboardScene.prototype.recalculateLayout = function () {
   var base = this.base;
+  var safeTopPadding = this.getSafeTopPadding();
   var headerHeight = base.rpx(120);
   var tabHeight = base.rpx(72);
   var tabMarginTop = base.rpx(20);
 
-  this.titleY = base.rpx(80);
-  this.tabY = headerHeight + tabMarginTop;
+  this.titleY = safeTopPadding + base.rpx(36);
+  this.tabY = safeTopPadding + headerHeight + tabMarginTop;
   this.listStartY = this.tabY + tabHeight + base.rpx(24);
-  this.listEndY = base.screenHeight - base.rpx(160);
-  this.myRankCardY = base.screenHeight - base.rpx(140);
+  this.listEndY = base.safeArea.bottom - base.rpx(160);
+  this.myRankCardY = base.safeArea.bottom - base.rpx(140);
 
   var tabCount = LEADERBOARD_TABS.length;
   var tabWidth = (base.gameWidth - base.rpx(16) * (tabCount - 1)) / tabCount;
