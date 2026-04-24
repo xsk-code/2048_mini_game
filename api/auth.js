@@ -2,6 +2,34 @@ var { request } = require('./client');
 
 var currentUser = null;
 
+function saveUserInfoToStorage(userInfo) {
+  try {
+    wx.setStorageSync('user_info', userInfo);
+  } catch (e) {
+    console.error('Failed to save user info:', e);
+  }
+}
+
+function loadUserInfoFromStorage() {
+  try {
+    var stored = wx.getStorageSync('user_info');
+    if (stored && typeof stored === 'object') {
+      return stored;
+    }
+  } catch (e) {
+    console.error('Failed to load user info:', e);
+  }
+  return null;
+}
+
+function clearUserInfoFromStorage() {
+  try {
+    wx.removeStorageSync('user_info');
+  } catch (e) {
+    console.error('Failed to clear user info:', e);
+  }
+}
+
 function login() {
   return new Promise(function (resolve, reject) {
     wx.login({
@@ -16,6 +44,7 @@ function login() {
             console.error('Failed to save auth token:', e);
           }
           currentUser = result.userInfo;
+          saveUserInfoToStorage(currentUser);
           resolve(result);
         }).catch(reject);
       },
@@ -29,15 +58,27 @@ function login() {
 function ensureLogin() {
   var token = '';
   try { token = wx.getStorageSync('auth_token') || ''; } catch (e) {}
-  if (token && currentUser) {
-    return Promise.resolve(currentUser);
+  
+  if (token) {
+    if (currentUser) {
+      return Promise.resolve(currentUser);
+    }
+    var storedUser = loadUserInfoFromStorage();
+    if (storedUser) {
+      currentUser = storedUser;
+      return Promise.resolve(currentUser);
+    }
   }
+  
   return login().then(function (result) {
     return result.userInfo;
   });
 }
 
 function getCurrentUser() {
+  if (!currentUser) {
+    currentUser = loadUserInfoFromStorage();
+  }
   return currentUser;
 }
 
@@ -49,6 +90,7 @@ function isLoggedIn() {
 
 function logout() {
   try { wx.removeStorageSync('auth_token'); } catch (e) {}
+  clearUserInfoFromStorage();
   currentUser = null;
 }
 
@@ -59,6 +101,7 @@ function updateUserInfo(newInfo) {
   }).then(function (result) {
     if (result.success && result.userInfo) {
       currentUser = Object.assign({}, currentUser, result.userInfo);
+      saveUserInfoToStorage(currentUser);
     }
     return result;
   });
