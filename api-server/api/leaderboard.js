@@ -93,14 +93,14 @@ module.exports = async (req, res) => {
     console.log('Final list:', list.length, 'items');
 
     let myRank = null;
-    const user = verifyToken(req);
-    console.log('Verified token user:', user);
+    const currentUser = verifyToken(req);
+    console.log('Verified token user:', currentUser);
     
-    if (user) {
+    if (currentUser) {
       const { data: myAllScores, error: myError } = await supabaseAdmin
         .from('scores')
         .select('score')
-        .eq('user_id', user.userId)
+        .eq('user_id', currentUser.userId)
         .eq('game_type', gameType)
         .order('score', { ascending: false })
         .limit(1);
@@ -128,7 +128,7 @@ module.exports = async (req, res) => {
           if (rankSeen.has(rankEntry.user_id)) continue;
           rankSeen.add(rankEntry.user_id);
           rank++;
-          if (rankEntry.user_id === user.userId) {
+          if (rankEntry.user_id === currentUser.userId) {
             myRank = {
               rank: rank,
               score: myBestScore
