@@ -126,8 +126,11 @@ class GamePopstar {
   }
 
   submitScoreToServer() {
+    const currentScore = this.popstarTotalScore;
+    console.log('Submitting popstar score to server:', currentScore);
+
     ensureLogin().then(() => {
-      return submitScore('popstar', this.popstarTotalScore);
+      return submitScore('popstar', currentScore);
     }).then((result) => {
       if (result.success) {
         console.log('Popstar score submitted. Best: ' + result.bestScore + ', Rank: ' + result.rank);

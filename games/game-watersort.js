@@ -133,8 +133,11 @@ class GameWatersort {
   }
 
   submitScoreToServer() {
+    const currentScore = this.watersortLevel;
+    console.log('Submitting watersort score to server:', currentScore);
+
     ensureLogin().then(() => {
-      return submitScore('watersort', this.watersortLevel);
+      return submitScore('watersort', currentScore);
     }).then((result) => {
       if (result.success) {
         console.log('Watersort score submitted. Best: ' + result.bestScore + ', Rank: ' + result.rank);
